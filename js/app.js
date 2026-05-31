@@ -809,14 +809,14 @@ function listeleGecmis() {
             <td data-label="No"><strong>${dNo}</strong></td>
             <td data-label="Tarih">${tarih}</td>
             <td data-label="Süre">${sure} dk</td>
-            <td data-label="Türkçe">${net["Türkçe"].toFixed(1)}</td>
-            <td data-label="Matematik">${net["Matematik"].toFixed(1)}</td>
-            <td data-label="Tarih">${net["Tarih"].toFixed(1)}</td>
-            <td data-label="Coğrafya">${net["Coğrafya"].toFixed(1)}</td>
-            <td data-label="Vatandaşlık">${net["Vatandaşlık"].toFixed(1)}</td>
-            <td data-label="GY Net" class="text-primary fw-bold">${gy.toFixed(1)}</td>
-            <td data-label="GK Net" class="text-primary fw-bold">${gk.toFixed(1)}</td>
-            <td data-label="Toplam" class="fw-bold" style="color:var(--success-color);">${tNet.toFixed(1)}</td>
+            <td data-label="Türkçe">${net["Türkçe"].toFixed(2)}</td>
+            <td data-label="Matematik">${net["Matematik"].toFixed(2)}</td>
+            <td data-label="Tarih">${net["Tarih"].toFixed(2)}</td>
+            <td data-label="Coğrafya">${net["Coğrafya"].toFixed(2)}</td>
+            <td data-label="Vatandaşlık">${net["Vatandaşlık"].toFixed(2)}</td>
+            <td data-label="GY Net" class="text-primary fw-bold">${gy.toFixed(2)}</td>
+            <td data-label="GK Net" class="text-primary fw-bold">${gk.toFixed(2)}</td>
+            <td data-label="Toplam" class="fw-bold" style="color:var(--success-color);">${tNet.toFixed(2)}</td>
         </tr>`;
     });
     
