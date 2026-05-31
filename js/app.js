@@ -354,7 +354,7 @@ function renderPanel() {
                 <label class="fs-14 fw-bold"><i class="fas fa-calendar-alt"></i> Tarih:</label>
                 <input type="date" id="dnmTarih" value="${db.meta?.[aktifDenemeNo]?.tarih || ''}" style="width:130px;">
                 <label class="fs-14 fw-bold ml-15"><i class="fas fa-stopwatch"></i> Süre (Dk):</label>
-                <input type="number" id="dnmSure" placeholder="130" value="${db.meta?.[aktifDenemeNo]?.sure || ''}" style="width:70px;">
+                <input type="number" id="dnmSure" placeholder="130" value="${db.meta?.[aktifDenemeNo]?.sure || 130}" min="0" style="width:70px;">
             </div>
             
             <div class="table-responsive">
@@ -403,7 +403,16 @@ function renderPanel() {
     document.getElementById('dnmSure').addEventListener('change', (e) => {
         if(!db.meta) db.meta = {}; 
         if(!db.meta[aktifDenemeNo]) db.meta[aktifDenemeNo] = {};
-        db.meta[aktifDenemeNo].sure = e.target.value; 
+        
+        let girilenSure = parseInt(e.target.value);
+        
+        // Eğer boş bırakılırsa, harf girilirse (NaN) veya eksi bir değer girilirse otomatik 130 yap
+        if (isNaN(girilenSure) || girilenSure <= 0) {
+            girilenSure = 130;
+            e.target.value = 130;
+        }
+        
+        db.meta[aktifDenemeNo].sure = girilenSure; 
         kaydet();
     });
 
@@ -801,7 +810,7 @@ function listeleGecmis() {
         let tNet = gy + gk;
         
         let tarih = db.meta?.[dNo]?.tarih ? new Date(db.meta[dNo].tarih).toLocaleDateString('tr-TR') : '-';
-        let sure = db.meta?.[dNo]?.sure || '-'; 
+        let sure = db.meta?.[dNo]?.sure || 130; 
         
         if(sure !== '-') { tS += parseInt(sure); sSayisi++; }
         
