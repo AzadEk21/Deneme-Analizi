@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPSS 2026 | Deneme Analiz</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
     <circle cx='50' cy='50' r='40' fill='none' stroke='%233b82f6' stroke-width='6'/>
     <circle cx='50' cy='50' r='20' fill='none' stroke='%233b82f6' stroke-width='6'/>
     <path d='M85 15 L55 45 M75 25 L85 15 L75 5 L85 15' fill='none' stroke='%230f172a' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/>
 </svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -47,6 +48,20 @@
                 Zaten hesabın var mı? <a href="#" id="showLoginBtn" class="text-primary fw-bold text-none">Giriş Yap</a>
             </p>
             <div id="registerMessage" class="mt-15 fs-13"></div>
+        </div>
+
+        <div class="auth-box d-none" id="resetBox">
+            <h2 class="text-primary mt-0"><i class="fas fa-key"></i> Şifre Sıfırlama</h2>
+            <p class="text-muted fs-14 mb-20">Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.</p>
+            
+            <input type="email" id="resetEmail" placeholder="E-posta Adresiniz" class="auth-input">
+            
+            <button id="resetBtn" class="btn-primary w-100 mb-15"><i class="fas fa-envelope"></i> Bağlantı Gönder</button>
+            
+            <p class="fs-14 text-muted m-0">
+                <a href="#" id="backToLoginBtn" class="text-primary fw-bold text-none"><i class="fas fa-arrow-left"></i> Giriş Ekranına Dön</a>
+            </p>
+            <div id="resetMessage" class="mt-15 fs-13"></div>
         </div>
     </div>
 
