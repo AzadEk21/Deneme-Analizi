@@ -44,17 +44,38 @@ document.getElementById('showLoginBtn').addEventListener('click', (e) => {
 // ============================================================================
 // 3. ŞİFRE SIFIRLAMA (PASSWORD RESET)
 // ============================================================================
-document.getElementById('forgotPasswordLink').addEventListener('click', async (e) => {
+const resetBox = document.getElementById('resetBox');
+const resetEmail = document.getElementById('resetEmail');
+const resetMessage = document.getElementById('resetMessage');
+
+// "Şifremi Unuttum" linkine tıklayınca sıfırlama kutusunu göster
+document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
     e.preventDefault();
-    const email = prompt("Şifre sıfırlama bağlantısı için kayıtlı e-posta adresinizi giriniz:");
+    loginBox.classList.add('d-none');
+    resetBox.classList.remove('d-none');
+});
+
+// "Giriş Ekranına Dön" linkine tıklayınca geri dön
+document.getElementById('backToLoginBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    resetBox.classList.add('d-none');
+    loginBox.classList.remove('d-none');
+});
+
+// "Bağlantı Gönder" butonuna tıklayınca
+document.getElementById('resetBtn').addEventListener('click', async () => {
+    const email = resetEmail.value.trim();
     
-    if(email) {
-        try {
-            await sendPasswordResetEmail(auth, email);
-            showMsg(loginMessage, "Şifre sıfırlama bağlantısı gönderildi! Lütfen e-postanızı kontrol edin.", "var(--success-color)");
-        } catch(error) {
-            showMsg(loginMessage, "Hata: " + errorCodeToMessage(error.code));
-        }
+    if(!email) {
+        return showMsg(resetMessage, "Lütfen e-posta adresinizi girin.");
+    }
+    
+    try {
+        await sendPasswordResetEmail(auth, email);
+        showMsg(resetMessage, "Sıfırlama bağlantısı gönderildi! Lütfen e-postanızı kontrol edin.", "var(--success-color)");
+        resetEmail.value = ''; // Kutuyu temizle
+    } catch(error) {
+        showMsg(resetMessage, "Hata: " + errorCodeToMessage(error.code));
     }
 });
 
