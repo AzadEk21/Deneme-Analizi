@@ -742,8 +742,8 @@ function runAIPrediction() {
 
     // Bir sonraki adıma (+2 birim süreye) projeksiyon yap
     let nextX = xData.length + 2; 
-    let predGY = (lrGY.slope * nextX + lrGY.intercept).toFixed(1);
-    let predGK = (lrGK.slope * nextX + lrGK.intercept).toFixed(1);
+    let predGY = (lrGY.slope * nextX + lrGY.intercept).toFixed(2);
+    let predGK = (lrGK.slope * nextX + lrGK.intercept).toFixed(2);
 
     // Veri anomali kontrolü (Netler max limiti aşamaz)
     predGY = Math.min(60, Math.max(0, predGY));
@@ -938,7 +938,7 @@ function cizGrafik() {
         pD += (i === 0) ? `M ${cx} ${cy} ` : `L ${cx} ${cy} `;
         svg += `<text x="${cx}" y="${h-pad+20}" fill="${mRengi}" font-size="12" text-anchor="middle">${pt.x}.Dnm</text>`;
         circs += `<circle cx="${cx}" cy="${cy}" r="5" fill="var(--card-bg)" stroke="var(--primary-color)" stroke-width="2"></circle>`;
-        circs += `<text x="${cx}" y="${cy-12}" fill="var(--primary-color)" font-size="12" font-weight="bold" text-anchor="middle">${pt.y.toFixed(1)}</text>`;
+        circs += `<text x="${cx}" y="${cy-12}" fill="var(--primary-color)" font-size="12" font-weight="bold" text-anchor="middle">${pt.y.toFixed(2)}</text>`;
     }); 
     
     wrap.innerHTML = svg + `<path d="${pD}" fill="none" stroke="var(--primary-color)" stroke-width="3" stroke-linecap="round"></path>${circs}</svg>`;
