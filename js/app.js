@@ -114,6 +114,62 @@ function kaydet() {
 }
 
 // ============================================================================
+// YENİ ÖZELLİK: HAYALET VERİ (GHOST DATA) TEMİZLEYİCİSİ
+// ============================================================================
+function temizleHayaletVeriler() {
+    let degisiklikYapildi = false;
+
+    // 1. Adım: 0 numaralı veya negatif hatalı girişleri sil
+    Object.keys(db).forEach(k => {
+        if(k === 'lastUpdated') return;
+        if(typeof db[k] === 'object') {
+            Object.keys(db[k]).forEach(noStr => {
+                let no = parseInt(noStr);
+                if(isNaN(no) || no <= 0) {
+                    delete db[k][noStr];
+                    degisiklikYapildi = true;
+                }
+            });
+        }
+    });
+
+    // 2. Adım: İçi tamamen boş olan ve tarihi girilmemiş hayalet denemeleri sil
+    let dNolar = new Set();
+    Object.keys(db).forEach(d => { 
+        if(d !== 'meta' && d !== 'lastUpdated') {
+            if(typeof db[d] === 'object') {
+                Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no)));
+            }
+        }
+    });
+
+    dNolar.forEach(no => {
+        let tamamenBosMu = true;
+        Object.keys(müfredat).forEach(ders => {
+            if(db[ders] && db[ders][no]) {
+                Object.keys(db[ders][no]).forEach(k => {
+                    let data = db[ders][no][k];
+                    if(data && (parseInt(data.d) > 0 || parseInt(data.y) > 0 || parseInt(data.b) > 0)) {
+                        tamamenBosMu = false;
+                    }
+                });
+            }
+        });
+
+        // Eğer hiçbir net girilmemişse VE meta'da tarih belirtilmemişse, bu bir hayalettir, yok et.
+        if(tamamenBosMu && !db.meta?.[no]?.tarih) {
+            Object.keys(db).forEach(d => {
+                if(db[d]?.[no]) delete db[d][no];
+            });
+            degisiklikYapildi = true;
+        }
+    });
+
+    // Eğer temizlik yapıldıysa veritabanını yeni haliyle buluta gönder
+    if(degisiklikYapildi) saveUserDataToDB(currentUid, db); 
+}
+
+// ============================================================================
 // 4. ÇEVRİMDIŞI / ÇEVRİMİÇİ AĞ YÖNETİMİ
 // ============================================================================
 window.addEventListener('online', () => {
@@ -136,6 +192,9 @@ export async function initUserApp(uid) {
         const userData = await loadUserDataFromDB(uid); 
         db = userData || {};
         if(!db.meta) db.meta = {};
+        
+        // Veritabanı yüklendiği an arka planda sessizce hayalet temizliği yap
+        temizleHayaletVeriler();
         
         const savedGy = localStorage.getItem(`gy_target_${uid}`); 
         const savedGk = localStorage.getItem(`gk_target_${uid}`);
@@ -253,16 +312,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('silModal').style.display = 'none';
     });
 
+    // SİLME İŞLEMİ GÜNCELLENDİ (Hayalet Üretimini Engeller)
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
+        let silinenNo = aktifDenemeNo; // Önce silinecek numarayı hafızaya al
+        
         Object.keys(db).forEach(d => { 
-            if(db[d]?.[aktifDenemeNo]) delete db[d][aktifDenemeNo]; 
+            if(db[d]?.[silinenNo]) delete db[d][silinenNo]; 
         });
-        if(db.meta?.[aktifDenemeNo]) delete db.meta[aktifDenemeNo]; 
+        if(db.meta?.[silinenNo]) delete db.meta[silinenNo]; 
+        
+        // Silme bittikten sonra HAYALET veri oluşmaması için aktif denemeyi 1 geriye at
+        aktifDenemeNo = Math.max(1, silinenNo - 1);
         
         kaydet(); 
         renderPanel(); 
         document.getElementById('silModal').style.display = 'none'; 
-        showToast(`${aktifDenemeNo}. Deneme silindi.`, "success");
+        showToast(`${silinenNo}. Deneme tamamen silindi.`, "success");
     });
 
     document.getElementById('exportCsvBtn')?.addEventListener('click', raporIndirCSV);
@@ -455,7 +520,18 @@ function renderPanel() {
     
     document.getElementById('btnPrevDnm').addEventListener('click', () => { aktifDenemeNo = Math.max(1, aktifDenemeNo - 1); aktifAramaTerimi = ""; renderPanel(); });
     document.getElementById('btnNextDnm').addEventListener('click', () => { aktifDenemeNo++; aktifAramaTerimi = ""; renderPanel(); });
-    document.getElementById('denemeNoInput').addEventListener('change', (e) => { aktifDenemeNo = Math.max(1, parseInt(e.target.value) || 1); aktifAramaTerimi = ""; renderPanel(); });
+    
+    // GÜNCELLENDİ: 0 veya geçersiz numara girişlerini anında engeller
+    document.getElementById('denemeNoInput').addEventListener('change', (e) => { 
+        let val = parseInt(e.target.value);
+        if(isNaN(val) || val < 1) val = 1;
+        
+        aktifDenemeNo = val; 
+        e.target.value = val; 
+        aktifAramaTerimi = ""; 
+        renderPanel(); 
+    });
+    
     document.getElementById('btnSilDnm').addEventListener('click', () => { document.getElementById('silModal').style.display = 'flex'; });
     
     document.getElementById('dnmTarih').addEventListener('change', (e) => {
@@ -566,17 +642,14 @@ function renderPanel() {
             hesaplaAltToplam();
         });
 
-        // YENİ: Akıllı Sınır Kontrolü
         const handleInput = (tur, val) => {
             let deger = Math.max(0, parseInt(val) || 0);
             let maxIzinVerilen = getMaksimumGirebilir(kAd, tur);
             
-            // Eğer girilen değer kalan limiti aşıyorsa otomatik sabitle
             if(deger > maxIzinVerilen) {
                 deger = maxIzinVerilen;
                 showToast(`Limit aşılamaz! Değer otomatik ${deger} yapıldı.`, "warning");
                 
-                // UI'ı hemen düzelt
                 if(tur === 'd') inpD.value = deger;
                 else if(tur === 'y') inpY.value = deger;
                 else inpB.value = deger;
@@ -614,18 +687,15 @@ function renderPanel() {
     }
 }
 
-// YENİ: Hangi kutuya maksimum kaç girilebileceğini hesaplayan fonksiyon
 function getMaksimumGirebilir(aktifKonu, tur) {
     let digerTop = 0; 
     müfredat[aktifDers].forEach(k => { 
         let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
         if (s !== false) { 
             let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
-            // Başka bir satırdaysak o satırın toplamını al
             if(k !== aktifKonu) {
                 digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
             } else {
-                // Aynı satırdaysak, değiştirmeye çalıştığımız tür "HARİÇ" diğerlerini al
                 let dVal = tur === 'd' ? 0 : Number(kData.d || 0);
                 let yVal = tur === 'y' ? 0 : Number(kData.y || 0);
                 let bVal = tur === 'b' ? 0 : Number(kData.b || 0);
@@ -660,6 +730,29 @@ function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
     let net = dVal - (yVal/4);
     tdNet.textContent = s ? net.toFixed(2) : '-';
     tdNet.style.color = (s && net < 0) ? 'var(--alert-color)' : '';
+}
+
+function kontrolSoruLimiti(aktifKonu, tur, yeniDeger) {
+    let digerTop = 0; 
+    müfredat[aktifDers].forEach(k => { 
+        let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
+        if (s !== false) { 
+            let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
+            if(k !== aktifKonu) {
+                digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
+            } else {
+                let dVal = tur === 'd' ? yeniDeger : Number(kData.d || 0);
+                let yVal = tur === 'y' ? yeniDeger : Number(kData.y || 0);
+                let bVal = tur === 'b' ? yeniDeger : Number(kData.b || 0);
+                digerTop += (dVal + yVal + bVal);
+            }
+        } 
+    });
+    
+    if(digerTop > SORU_LIMITLERI[aktifDers]) { 
+        return false;
+    }
+    return true;
 }
 
 function hesaplaAltToplam() {
