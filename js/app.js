@@ -57,7 +57,7 @@ const müfredat = {
     "Vatandaşlık": [
         "Hukukun Temel Kavramları", "Devlet Biçimleri Demokrasi", "Anayasa Hukukuna Giriş", 
         "1982 Anayasasının Temel İlkeleri", "Yasama", "Yürütme", "Yargı", 
-        "Temel Hak Ve Hürriyetler", "İdare Hukuku", "Uluslararası Kuruluşlar", "Güncel Bilgiler"
+        "Temel Hak Ve Hürriyetler", "İdare Hukuku-(Devlet Memurları Kanunu - DMK 657)", "Uluslararası Kuruluşlar", "Güncel Bilgiler"
     ]
 };
 
