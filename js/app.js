@@ -72,6 +72,7 @@ let aktifSekme = "ders";
 let aktifGrafikFiltre = "Genel"; 
 let aktifAnalizFiltresi = 3;
 let aktifAnalizDersi = "Türkçe";
+let aktifAramaTerimi = ""; // <-- YENİ: Arama çubuğu hafızası
 let mevcutTema = localStorage.getItem('kpss_tema') || 'dark';
 
 // Başlangıç Tema Ayarı
@@ -285,6 +286,7 @@ function renderNav() {
         btn.addEventListener('click', () => { 
             aktifDers = ders; 
             aktifSekme = "ders"; 
+            aktifAramaTerimi = ""; // Başka derse geçince aramayı sıfırla
             renderNav(); 
             gosterSekme(); 
         });
@@ -303,6 +305,7 @@ function renderNav() {
         btn.className = `${p.cls} ${aktifSekme === p.id ? "active" : ""}`;
         btn.addEventListener('click', () => { 
             aktifSekme = p.id; 
+            aktifAramaTerimi = ""; // Sekme değişince aramayı sıfırla
             renderNav(); 
             gosterSekme(); 
         });
@@ -383,13 +386,12 @@ function gosterSekme() {
 }
 
 // ============================================================================
-// 8. VERİ GİRİŞ (DERS) PANELİ 
+// 8. VERİ GİRİŞ (DERS) PANELİ (YENİ: ARAMA VE BOŞLARI KAPATMA EKLENDİ)
 // ============================================================================
 function renderPanel() {
     const mainContent = document.getElementById('mainContent');
     let hepsiSecili = true;
     
-    // BAŞLIKLAR RENKLENDİRİLDİ (Doğru: Yeşil, Yanlış: Kırmızı, Boş: Mavi)
     let html = `
         <div class="panel active">
             <div class="deneme-header">
@@ -402,11 +404,21 @@ function renderPanel() {
                 </div>
             </div>
             
-            <div class="meta-inputs">
-                <label class="fs-14 fw-bold"><i class="fas fa-calendar-alt"></i> Tarih:</label>
-                <input type="date" id="dnmTarih" value="${db.meta?.[aktifDenemeNo]?.tarih || ''}" style="width:130px;">
-                <label class="fs-14 fw-bold ml-15"><i class="fas fa-stopwatch"></i> Süre (Dk):</label>
-                <input type="number" id="dnmSure" placeholder="130" value="${db.meta?.[aktifDenemeNo]?.sure || 130}" min="0" style="width:70px;">
+            <div class="meta-inputs flex-wrap align-center gap-15">
+                <div class="flex-row align-center gap-10">
+                    <label class="fs-14 fw-bold"><i class="fas fa-calendar-alt"></i> Tarih:</label>
+                    <input type="date" id="dnmTarih" value="${db.meta?.[aktifDenemeNo]?.tarih || ''}" style="width:130px;">
+                    <label class="fs-14 fw-bold ml-15"><i class="fas fa-stopwatch"></i> Süre (Dk):</label>
+                    <input type="number" id="dnmSure" placeholder="130" value="${db.meta?.[aktifDenemeNo]?.sure || 130}" min="0" style="width:70px;">
+                </div>
+                
+                <div class="flex-row align-center gap-10 ml-auto flex-wrap">
+                    <button id="btnBoslariKapat" class="btn-warning" title="Sadece işlem yapılmayanları (0 olanları) devre dışı bırakır."><i class="fas fa-magic"></i> İşlemsizleri Kapat</button>
+                    <div style="position:relative;">
+                        <input type="text" id="konuArama" placeholder="Konu Ara..." class="auth-input m-0" value="${aktifAramaTerimi}" style="width:180px; padding: 8px 10px 8px 30px;">
+                        <i class="fas fa-search text-muted" style="position:absolute; left:10px; top:10px;"></i>
+                    </div>
+                </div>
             </div>
             
             <div class="table-responsive">
@@ -440,9 +452,9 @@ function renderPanel() {
     const tbody = document.getElementById('dersTbody');
     const anaCb = document.getElementById('anaCheckbox');
     
-    document.getElementById('btnPrevDnm').addEventListener('click', () => { aktifDenemeNo = Math.max(1, aktifDenemeNo - 1); renderPanel(); });
-    document.getElementById('btnNextDnm').addEventListener('click', () => { aktifDenemeNo++; renderPanel(); });
-    document.getElementById('denemeNoInput').addEventListener('change', (e) => { aktifDenemeNo = Math.max(1, parseInt(e.target.value) || 1); renderPanel(); });
+    document.getElementById('btnPrevDnm').addEventListener('click', () => { aktifDenemeNo = Math.max(1, aktifDenemeNo - 1); aktifAramaTerimi = ""; renderPanel(); });
+    document.getElementById('btnNextDnm').addEventListener('click', () => { aktifDenemeNo++; aktifAramaTerimi = ""; renderPanel(); });
+    document.getElementById('denemeNoInput').addEventListener('change', (e) => { aktifDenemeNo = Math.max(1, parseInt(e.target.value) || 1); aktifAramaTerimi = ""; renderPanel(); });
     document.getElementById('btnSilDnm').addEventListener('click', () => { document.getElementById('silModal').style.display = 'flex'; });
     
     document.getElementById('dnmTarih').addEventListener('change', (e) => {
@@ -465,6 +477,40 @@ function renderPanel() {
         kaydet();
     });
 
+    // ARAMA DİNLEYİCİSİ (Canlı Filtreleme)
+    const aramaInput = document.getElementById('konuArama');
+    aramaInput.addEventListener('input', (e) => {
+        aktifAramaTerimi = e.target.value.toLocaleLowerCase('tr-TR');
+        uygulaAramaFiltresi();
+    });
+
+    // BOŞLARI KAPAT BUTONU DİNLEYİCİSİ
+    document.getElementById('btnBoslariKapat').addEventListener('click', () => {
+        let islemYapildi = false;
+        müfredat[aktifDers].forEach(kAd => {
+            let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {};
+            let d = parseInt(data.d) || 0;
+            let y = parseInt(data.y) || 0;
+            let b = parseInt(data.b) || 0;
+            let s = data.s === undefined ? true : data.s;
+
+            // Eğer Doğru, Yanlış, Boş 0 ise ve konu aktif durumdaysa onu devre dışı bırak
+            if (d === 0 && y === 0 && b === 0 && s === true) {
+                veriNesnesiOlustur(kAd);
+                db[aktifDers][aktifDenemeNo][kAd].s = false;
+                islemYapildi = true;
+            }
+        });
+
+        if (islemYapildi) {
+            kaydet();
+            renderPanel(); // Görünümü tazele (Arama terimi de hafızada olduğu için korunur)
+            showToast("İşlem yapılmayan konular analiz dışı bırakıldı.", "success");
+        } else {
+            showToast("Kapatılacak boş konu bulunamadı.", "info");
+        }
+    });
+
     müfredat[aktifDers].forEach((kAd) => {
         let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {d:0, y:0, b:0, s:true}; 
         let s = data.s === undefined ? true : data.s; 
@@ -484,7 +530,6 @@ function renderPanel() {
         const tdName = document.createElement('td');
         tdName.textContent = kAd;
 
-        // İNPUTLAR RENKLENDİRİLDİ VE KALINLAŞTIRILDI
         const tdD = document.createElement('td');
         const inpD = document.createElement('input');
         inpD.type = 'number'; inpD.min = 0; inpD.value = data.d || 0; inpD.disabled = !s;
@@ -555,6 +600,27 @@ function renderPanel() {
     });
 
     hesaplaAltToplam(); 
+    
+    // Yükleme tamamlandığında eğer hafızada bir arama terimi varsa uygula
+    if(aktifAramaTerimi !== "") {
+        uygulaAramaFiltresi();
+        // Cursor'ı tekrar arama kutusuna odakla
+        aramaInput.focus();
+        aramaInput.setSelectionRange(aktifAramaTerimi.length, aktifAramaTerimi.length);
+    }
+}
+
+// ARAMA FİLTRESİ FONKSİYONU
+function uygulaAramaFiltresi() {
+    const rows = document.querySelectorAll('#dersTbody tr');
+    rows.forEach(row => {
+        const konuAdi = row.querySelector('td:nth-child(2)').textContent.toLocaleLowerCase('tr-TR');
+        if(konuAdi.includes(aktifAramaTerimi)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
 }
 
 function veriNesnesiOlustur(kAd) {
@@ -705,7 +771,6 @@ function analizEt() {
             itemDiv.className = 'analiz-item';
             
             const textDiv = document.createElement('div');
-            // ANALİZ METİNLERİ DE RENKLENDİRİLDİ
             textDiv.innerHTML = `<strong>${k}</strong>${tI} <div class="fs-13 mt-5"><span class="text-muted">${sS} Sınav:</span> <span class="text-success fw-bold">${dS}D</span>, <span class="text-danger fw-bold">${yS}Y</span>, <span class="text-info fw-bold">${bS}B</span></div>`;
             
             const percDiv = document.createElement('div');
