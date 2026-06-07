@@ -72,6 +72,7 @@
 .mb-25 { margin-bottom: 25px !important; }
 .mb-30 { margin-bottom: 30px !important; }
 .ml-15 { margin-left: 15px !important; }
+.ml-auto { margin-left: auto !important; }
 .m-0 { margin: 0 !important; }
 
 .pt-20 { padding-top: 20px !important; }
@@ -96,6 +97,7 @@
 .flex-wrap { flex-wrap: wrap; }
 .gap-10 { gap: 10px; }
 .gap-12 { gap: 12px; }
+.gap-15 { gap: 15px; }
 
 .border-standard { border: 1px solid var(--border-color); }
 .border-bottom { border-bottom: 1px solid var(--border-color); }
@@ -228,6 +230,9 @@ button.active {
 .btn-danger { background-color: var(--alert-color); color: white; border: none; }
 .btn-danger:hover { background-color: #dc2626; }
 
+.btn-warning { background-color: var(--warning-color); color: #000; border: none; }
+.btn-warning:hover { background-color: #ca8a04; color: white; }
+
 .btn-success { background-color: var(--success-color); color: white; border: none; }
 .btn-success:hover { background-color: #16a34a; }
 
@@ -296,12 +301,10 @@ button.active {
 .meta-inputs { 
     display: flex; 
     align-items: center; 
-    gap: 15px; 
     padding: 12px; 
     background: rgba(0,0,0,0.02); 
     border-radius: 8px; 
     margin-bottom: 15px; 
-    flex-wrap: wrap; 
     border: 1px solid var(--border-color); 
 }
 
@@ -309,6 +312,7 @@ button.active {
 
 input[type="number"], 
 input[type="date"], 
+input[type="text"],
 .auth-input { 
     background-color: var(--input-bg); 
     color: var(--text-main); 
@@ -324,6 +328,7 @@ input[type="number"] { width: 60px; text-align: center; }
 
 input[type="number"]:focus:not(:disabled), 
 input[type="date"]:focus, 
+input[type="text"]:focus,
 .auth-input:focus { 
     border-color: var(--primary-color); 
     box-shadow: 0 0 0 2px rgba(59,130,246,0.2); 
@@ -346,7 +351,7 @@ input[type="checkbox"] {
    6. TABLOLAR VE MOBİL KART GÖRÜNÜMÜ (UI/UX)
    ========================================================================== */
 .table-responsive { width: 100%; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+table { width: 100%; border-collapse: collapse; min-width: 550px; }
 
 th, td { 
     padding: 10px 12px; 
@@ -382,7 +387,7 @@ th {
         display: block; 
     }
     
-    #gecmisIcerik thead tr { display: none; } /* Başlıkları gizle */
+    #gecmisIcerik thead tr { display: none; }
     
     #gecmisIcerik tr { 
         margin-bottom: 15px; 
@@ -419,7 +424,6 @@ th {
     }
 }
 
-/* Boş Durum (Empty State) Tasarımı */
 .empty-state { 
     display: flex; 
     flex-direction: column; 
@@ -487,7 +491,7 @@ th {
 }
 
 /* ==========================================================================
-   8. YENİ: YAPAY ZEKA TAHMİN KARTI
+   8. YAPAY ZEKA TAHMİN KARTI
    ========================================================================== */
 .ai-prediction-card { 
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); 
@@ -689,7 +693,6 @@ svg {
         padding: 0; 
     }
     
-    /* Yazdırılırken gizlenecek UI elemanları */
     .theme-toggle, 
     .nav-buttons, 
     .deneme-controls, 
@@ -710,7 +713,6 @@ svg {
         margin-bottom: 0 !important; 
     }
     
-    /* PDF'te Arka plan renklerini zorla korumak için */
     * { 
         -webkit-print-color-adjust: exact !important; 
         print-color-adjust: exact !important; 
