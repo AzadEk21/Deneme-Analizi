@@ -72,7 +72,7 @@ let aktifSekme = "ders";
 let aktifGrafikFiltre = "Genel"; 
 let aktifAnalizFiltresi = 3;
 let aktifAnalizDersi = "Türkçe";
-let aktifAramaTerimi = ""; // <-- YENİ: Arama çubuğu hafızası
+let aktifAramaTerimi = "";
 let mevcutTema = localStorage.getItem('kpss_tema') || 'dark';
 
 // Başlangıç Tema Ayarı
@@ -92,6 +92,7 @@ function showToast(msg, type = "error") {
     toast.className = `toast ${type}`; 
     
     let icon = type === "error" ? '<i class="fas fa-exclamation-circle"></i>' : 
+               type === "warning" ? '<i class="fas fa-exclamation-triangle"></i>' :
                type === "success" ? '<i class="fas fa-check-circle"></i>' : 
                '<i class="fas fa-info-circle"></i>';
                
@@ -286,7 +287,7 @@ function renderNav() {
         btn.addEventListener('click', () => { 
             aktifDers = ders; 
             aktifSekme = "ders"; 
-            aktifAramaTerimi = ""; // Başka derse geçince aramayı sıfırla
+            aktifAramaTerimi = ""; 
             renderNav(); 
             gosterSekme(); 
         });
@@ -305,7 +306,7 @@ function renderNav() {
         btn.className = `${p.cls} ${aktifSekme === p.id ? "active" : ""}`;
         btn.addEventListener('click', () => { 
             aktifSekme = p.id; 
-            aktifAramaTerimi = ""; // Sekme değişince aramayı sıfırla
+            aktifAramaTerimi = ""; 
             renderNav(); 
             gosterSekme(); 
         });
@@ -386,7 +387,7 @@ function gosterSekme() {
 }
 
 // ============================================================================
-// 8. VERİ GİRİŞ (DERS) PANELİ (YENİ: ARAMA VE BOŞLARI KAPATMA EKLENDİ)
+// 8. VERİ GİRİŞ (DERS) PANELİ 
 // ============================================================================
 function renderPanel() {
     const mainContent = document.getElementById('mainContent');
@@ -477,14 +478,12 @@ function renderPanel() {
         kaydet();
     });
 
-    // ARAMA DİNLEYİCİSİ (Canlı Filtreleme)
     const aramaInput = document.getElementById('konuArama');
     aramaInput.addEventListener('input', (e) => {
         aktifAramaTerimi = e.target.value.toLocaleLowerCase('tr-TR');
         uygulaAramaFiltresi();
     });
 
-    // BOŞLARI KAPAT BUTONU DİNLEYİCİSİ
     document.getElementById('btnBoslariKapat').addEventListener('click', () => {
         let islemYapildi = false;
         müfredat[aktifDers].forEach(kAd => {
@@ -494,7 +493,6 @@ function renderPanel() {
             let b = parseInt(data.b) || 0;
             let s = data.s === undefined ? true : data.s;
 
-            // Eğer Doğru, Yanlış, Boş 0 ise ve konu aktif durumdaysa onu devre dışı bırak
             if (d === 0 && y === 0 && b === 0 && s === true) {
                 veriNesnesiOlustur(kAd);
                 db[aktifDers][aktifDenemeNo][kAd].s = false;
@@ -504,7 +502,7 @@ function renderPanel() {
 
         if (islemYapildi) {
             kaydet();
-            renderPanel(); // Görünümü tazele (Arama terimi de hafızada olduğu için korunur)
+            renderPanel(); 
             showToast("İşlem yapılmayan konular analiz dışı bırakıldı.", "success");
         } else {
             showToast("Kapatılacak boş konu bulunamadı.", "info");
@@ -568,19 +566,27 @@ function renderPanel() {
             hesaplaAltToplam();
         });
 
+        // YENİ: Akıllı Sınır Kontrolü
         const handleInput = (tur, val) => {
             let deger = Math.max(0, parseInt(val) || 0);
-            if(kontrolSoruLimiti(kAd, tur, deger)) {
-                veriNesnesiOlustur(kAd);
-                db[aktifDers][aktifDenemeNo][kAd][tur] = deger;
-                kaydet();
-                guncelleSatirArayuz(kAd, inpD.value, inpY.value, cb.checked, tdNet);
-                hesaplaAltToplam();
-            } else {
-                if(tur === 'd') inpD.value = data.d || 0;
-                else if(tur === 'y') inpY.value = data.y || 0;
-                else inpB.value = data.b || 0;
+            let maxIzinVerilen = getMaksimumGirebilir(kAd, tur);
+            
+            // Eğer girilen değer kalan limiti aşıyorsa otomatik sabitle
+            if(deger > maxIzinVerilen) {
+                deger = maxIzinVerilen;
+                showToast(`Limit aşılamaz! Değer otomatik ${deger} yapıldı.`, "warning");
+                
+                // UI'ı hemen düzelt
+                if(tur === 'd') inpD.value = deger;
+                else if(tur === 'y') inpY.value = deger;
+                else inpB.value = deger;
             }
+            
+            veriNesnesiOlustur(kAd);
+            db[aktifDers][aktifDenemeNo][kAd][tur] = deger;
+            kaydet();
+            guncelleSatirArayuz(kAd, inpD.value, inpY.value, cb.checked, tdNet);
+            hesaplaAltToplam();
         };
 
         inpD.addEventListener('input', (e) => handleInput('d', e.target.value));
@@ -601,16 +607,36 @@ function renderPanel() {
 
     hesaplaAltToplam(); 
     
-    // Yükleme tamamlandığında eğer hafızada bir arama terimi varsa uygula
     if(aktifAramaTerimi !== "") {
         uygulaAramaFiltresi();
-        // Cursor'ı tekrar arama kutusuna odakla
         aramaInput.focus();
         aramaInput.setSelectionRange(aktifAramaTerimi.length, aktifAramaTerimi.length);
     }
 }
 
-// ARAMA FİLTRESİ FONKSİYONU
+// YENİ: Hangi kutuya maksimum kaç girilebileceğini hesaplayan fonksiyon
+function getMaksimumGirebilir(aktifKonu, tur) {
+    let digerTop = 0; 
+    müfredat[aktifDers].forEach(k => { 
+        let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
+        if (s !== false) { 
+            let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
+            // Başka bir satırdaysak o satırın toplamını al
+            if(k !== aktifKonu) {
+                digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
+            } else {
+                // Aynı satırdaysak, değiştirmeye çalıştığımız tür "HARİÇ" diğerlerini al
+                let dVal = tur === 'd' ? 0 : Number(kData.d || 0);
+                let yVal = tur === 'y' ? 0 : Number(kData.y || 0);
+                let bVal = tur === 'b' ? 0 : Number(kData.b || 0);
+                digerTop += (dVal + yVal + bVal);
+            }
+        } 
+    });
+    
+    return Math.max(0, SORU_LIMITLERI[aktifDers] - digerTop);
+}
+
 function uygulaAramaFiltresi() {
     const rows = document.querySelectorAll('#dersTbody tr');
     rows.forEach(row => {
@@ -634,30 +660,6 @@ function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
     let net = dVal - (yVal/4);
     tdNet.textContent = s ? net.toFixed(2) : '-';
     tdNet.style.color = (s && net < 0) ? 'var(--alert-color)' : '';
-}
-
-function kontrolSoruLimiti(aktifKonu, tur, yeniDeger) {
-    let digerTop = 0; 
-    müfredat[aktifDers].forEach(k => { 
-        let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
-        if (s !== false) { 
-            let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
-            if(k !== aktifKonu) {
-                digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
-            } else {
-                let dVal = tur === 'd' ? yeniDeger : Number(kData.d || 0);
-                let yVal = tur === 'y' ? yeniDeger : Number(kData.y || 0);
-                let bVal = tur === 'b' ? yeniDeger : Number(kData.b || 0);
-                digerTop += (dVal + yVal + bVal);
-            }
-        } 
-    });
-    
-    if(digerTop > SORU_LIMITLERI[aktifDers]) { 
-        showToast(`${aktifDers} dersi için Doğru, Yanlış ve Boş toplamı ${SORU_LIMITLERI[aktifDers]} soruyu geçemez!`, "error"); 
-        return false;
-    }
-    return true;
 }
 
 function hesaplaAltToplam() {
