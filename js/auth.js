@@ -26,6 +26,10 @@ const registerPassword = document.getElementById('registerPassword');
 const loginMessage = document.getElementById('loginMessage');
 const registerMessage = document.getElementById('registerMessage');
 
+const resetBox = document.getElementById('resetBox');
+const resetEmail = document.getElementById('resetEmail');
+const resetMessage = document.getElementById('resetMessage');
+
 // ============================================================================
 // 2. EKRAN GEÇİŞLERİ
 // ============================================================================
@@ -41,62 +45,45 @@ document.getElementById('showLoginBtn').addEventListener('click', (e) => {
     loginBox.classList.remove('d-none'); 
 });
 
-// ============================================================================
-// 3. ŞİFRE SIFIRLAMA (PASSWORD RESET)
-// ============================================================================
-const resetBox = document.getElementById('resetBox');
-const resetEmail = document.getElementById('resetEmail');
-const resetMessage = document.getElementById('resetMessage');
-
-// "Şifremi Unuttum" linkine tıklayınca sıfırlama kutusunu göster
 document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
     e.preventDefault();
     loginBox.classList.add('d-none');
     resetBox.classList.remove('d-none');
 });
 
-// "Giriş Ekranına Dön" linkine tıklayınca geri dön
 document.getElementById('backToLoginBtn').addEventListener('click', (e) => {
     e.preventDefault();
     resetBox.classList.add('d-none');
     loginBox.classList.remove('d-none');
 });
 
-// "Bağlantı Gönder" butonuna tıklayınca
+// ============================================================================
+// 3. KİMLİK DOĞRULAMA (AUTH) İŞLEMLERİ
+// ============================================================================
+
+// Şifre Sıfırlama
 document.getElementById('resetBtn').addEventListener('click', async () => {
     const email = resetEmail.value.trim();
-    
-    if(!email) {
-        return showMsg(resetMessage, "Lütfen e-posta adresinizi girin.");
-    }
+    if(!email) return showMsg(resetMessage, "Lütfen e-posta adresinizi girin.");
     
     try {
         await sendPasswordResetEmail(auth, email);
         showMsg(resetMessage, "Sıfırlama bağlantısı gönderildi! Lütfen e-postanızı kontrol edin.", "var(--success-color)");
-        resetEmail.value = ''; // Kutuyu temizle
+        resetEmail.value = ''; 
     } catch(error) {
         showMsg(resetMessage, "Hata: " + errorCodeToMessage(error.code));
     }
 });
 
-// ============================================================================
-// 4. KAYIT OL (GÜNCELLENMİŞ VE OPTİMİZE EDİLMİŞ AKIŞ)
-// ============================================================================
-// isRegistering bayrağı ve manuel signOut kaldırıldı. Firebase'in doğal akışı kullanıldı.
+// Kayıt Ol
 document.getElementById('registerBtn').addEventListener('click', async () => {
     const email = registerEmail.value.trim(); 
     const password = registerPassword.value.trim();
     
-    if (!email || !password) {
-        return showMsg(registerMessage, "E-posta ve şifre boş bırakılamaz.");
-    }
+    if (!email || !password) return showMsg(registerMessage, "E-posta ve şifre boş bırakılamaz.");
     
     try {
         await createUserWithEmailAndPassword(auth, email, password);
-        // Kayıt başarılı olduğunda Firebase otomatik olarak oturum açar 
-        // ve onAuthStateChanged tetiklenerek ana ekrana pürüzsüz geçiş sağlanır.
-        
-        // Güvenlik için formu temizle
         registerEmail.value = '';
         registerPassword.value = '';
     } catch (error) {
@@ -104,16 +91,12 @@ document.getElementById('registerBtn').addEventListener('click', async () => {
     }
 });
 
-// ============================================================================
-// 5. GİRİŞ YAP (LOGIN)
-// ============================================================================
+// Giriş Yap
 document.getElementById('loginBtn').addEventListener('click', async () => {
     const email = loginEmail.value.trim(); 
     const password = loginPassword.value.trim();
     
-    if (!email || !password) {
-        return showMsg(loginMessage, "E-posta ve şifre boş bırakılamaz.");
-    }
+    if (!email || !password) return showMsg(loginMessage, "E-posta ve şifre boş bırakılamaz.");
     
     try { 
         await signInWithEmailAndPassword(auth, email, password); 
@@ -122,49 +105,40 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 
-// ============================================================================
-// 6. ÇIKIŞ YAP (LOGOUT)
-// ============================================================================
+// Çıkış Yap
 document.getElementById('logoutBtn').addEventListener('click', async () => { 
     await signOut(auth); 
 });
 
 // ============================================================================
-// 7. OTURUM DURUMU DİNLEYİCİSİ (AUTH STATE OBSERVER)
+// 4. OTURUM DURUMU DİNLEYİCİSİ (AUTH STATE OBSERVER)
 // ============================================================================
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Kullanıcı giriş yaptıysa
         authScreen.classList.add('d-none'); 
         appScreen.classList.remove('d-none');
         document.getElementById('userEmailDisplay').textContent = user.email;
-        
-        // Uygulamayı başlat ve veritabanı bağlantısını kur
         initUserApp(user.uid);
     } else {
-        // Çıkış yapıldıysa veya henüz girilmediyse
         appScreen.classList.add('d-none'); 
         authScreen.classList.remove('d-none');
         
-        // Her zaman giriş kutusunu varsayılan olarak göster
         loginBox.classList.remove('d-none'); 
         registerBox.classList.add('d-none');
+        resetBox.classList.add('d-none');
         
-        // Güvenlik için inputları temizle
         loginPassword.value = ''; 
         document.getElementById('userEmailDisplay').textContent = '';
         
-        // Uygulama verilerini DOM'dan temizle
         clearUserApp();
     }
 });
 
 // ============================================================================
-// 8. YARDIMCI FONKSİYONLAR VE HATA YAKALAMA
+// 5. YARDIMCI FONKSİYONLAR VE HATA YAKALAMA
 // ============================================================================
 function showMsg(el, msg, color = "var(--alert-color)") {
     el.style.color = color; 
-    // XSS Güvenliği için innerHTML yerine textContent kullanılıyor
     el.textContent = msg; 
     setTimeout(() => { el.textContent = ''; }, 4000);
 }
@@ -177,6 +151,6 @@ function errorCodeToMessage(code) {
         case 'auth/user-not-found': return "Kullanıcı bulunamadı.";
         case 'auth/wrong-password': return "Hatalı şifre girdiniz.";
         case 'auth/invalid-credential': return "E-posta veya şifre hatalı.";
-        default: return "Giriş yapılamadı, lütfen tekrar deneyin.";
+        default: return "İşlem başarısız, lütfen tekrar deneyin.";
     }
 }
