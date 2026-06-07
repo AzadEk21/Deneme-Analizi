@@ -46,7 +46,6 @@ function showToast(msg, type = "error") {
                type === "success" ? '<i class="fas fa-check-circle"></i>' : 
                '<i class="fas fa-info-circle"></i>';
                
-    // XSS Koruması için innerHTML sadece ikon için, metin için textContent
     toast.innerHTML = icon + ' <span></span>';
     toast.querySelector('span').textContent = msg;
     
@@ -59,7 +58,7 @@ function showToast(msg, type = "error") {
 
 function kaydet() { 
     if(currentUid) {
-        db.lastUpdated = Date.now(); // Veri Kaybı (Conflict) kontrolü için timestamp
+        db.lastUpdated = Date.now(); 
         saveUserDataToDB(currentUid, db); 
     }
 }
@@ -109,7 +108,7 @@ export function clearUserApp() {
 }
 
 // ============================================================================
-// 6. EVENT LISTENER'LAR (MODÜLER - GLOBAL SCOPE KİRLİLİĞİ YOK)
+// 6. EVENT LISTENER'LAR 
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -189,9 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="evaluation-text"></div>
             </div>`;
         
-        // XSS Önlemi: Değerlendirme metnini güvenli basma
         resArea.querySelector('.evaluation-text').textContent = evalText;
         resArea.classList.remove('d-none');
+    });
+
+    // Kılavuz (Yardım) Butonları Event Listener'ları
+    document.getElementById('helpBtn')?.addEventListener('click', () => { 
+        document.getElementById('helpModal').style.display = 'flex'; 
+    });
+    document.getElementById('closeHelpBtn')?.addEventListener('click', () => { 
+        document.getElementById('helpModal').style.display = 'none'; 
     });
 
     document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => {
@@ -285,9 +291,8 @@ function gosterSekme() {
             dersFiltreKutusu.appendChild(btn);
         });
 
-        // Zaman filtre eventlerini bağla
         document.querySelectorAll('#analizFiltreler .pill-btn').forEach(btn => {
-            btn.replaceWith(btn.cloneNode(true)); // Event duplication önleme
+            btn.replaceWith(btn.cloneNode(true)); 
         });
         document.querySelectorAll('#analizFiltreler .pill-btn').forEach(btn => {
             btn.addEventListener('click', (e) => { 
@@ -305,7 +310,7 @@ function gosterSekme() {
         let dNolar = Object.keys(db).filter(k => k !== 'meta' && k !== 'lastUpdated').flatMap(d => Object.keys(db[d]||{})).map(Number);
         document.getElementById('hedefDenemeNo').value = dNolar.length ? Math.max(...dNolar) : 1; 
         listeleGecmis(); 
-        runAIPrediction(); // Yeni Yapay Zeka Özelliği Tetiklemesi
+        runAIPrediction(); 
     }
     else if(aktifSekme === "grafik") { 
         document.getElementById('grafikPanel').style.display = "block"; 
@@ -331,13 +336,13 @@ function gosterSekme() {
 }
 
 // ============================================================================
-// 8. VERİ GİRİŞ (DERS) PANELİ - DOM OPTİMİZASYONLU (innerHTML yorulmaz)
+// 8. VERİ GİRİŞ (DERS) PANELİ 
 // ============================================================================
 function renderPanel() {
     const mainContent = document.getElementById('mainContent');
     let hepsiSecili = true;
     
-    // Yalnızca iskeleti bir kere innerHTML ile basıyoruz
+    // Boş sütunu tablo iskeletine eklendi
     let html = `
         <div class="panel active">
             <div class="deneme-header">
@@ -365,6 +370,7 @@ function renderPanel() {
                             <th>Konu Adı</th>
                             <th>Doğru</th>
                             <th>Yanlış</th>
+                            <th>Boş</th>
                             <th>Net</th>
                         </tr>
                     </thead>
@@ -374,7 +380,8 @@ function renderPanel() {
                             <td colspan="2" style="text-align:right;">GENEL TOPLAM:</td>
                             <td id="tdTopD">0</td>
                             <td id="tdTopY">0</td>
-                            <td id="tdTopNet" class="text-primary">Net: 0 | Boş: 0</td>
+                            <td id="tdTopB">0</td>
+                            <td id="tdTopNet" class="text-primary">Net: 0 | İşaretlenmeyen: 0</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -383,11 +390,9 @@ function renderPanel() {
     
     mainContent.innerHTML = html;
 
-    // DOM Elementlerini seç
     const tbody = document.getElementById('dersTbody');
     const anaCb = document.getElementById('anaCheckbox');
     
-    // Üst Kontrol Butonları Eventleri
     document.getElementById('btnPrevDnm').addEventListener('click', () => { aktifDenemeNo = Math.max(1, aktifDenemeNo - 1); renderPanel(); });
     document.getElementById('btnNextDnm').addEventListener('click', () => { aktifDenemeNo++; renderPanel(); });
     document.getElementById('denemeNoInput').addEventListener('change', (e) => { aktifDenemeNo = Math.max(1, parseInt(e.target.value) || 1); renderPanel(); });
@@ -405,20 +410,17 @@ function renderPanel() {
         if(!db.meta[aktifDenemeNo]) db.meta[aktifDenemeNo] = {};
         
         let girilenSure = parseInt(e.target.value);
-        
-        // Eğer boş bırakılırsa, harf girilirse (NaN) veya eksi bir değer girilirse otomatik 130 yap
         if (isNaN(girilenSure) || girilenSure <= 0) {
             girilenSure = 130;
             e.target.value = 130;
         }
-        
         db.meta[aktifDenemeNo].sure = girilenSure; 
         kaydet();
     });
 
-    // Satırları Node oluşturarak ekle (Güvenli XSS Önlemi ve Performans)
     müfredat[aktifDers].forEach((kAd) => {
-        let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {d:0, y:0, s:true}; 
+        // Yeni "Boş" (b: 0) parametresi veri nesnesine dahil edildi
+        let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {d:0, y:0, b:0, s:true}; 
         let s = data.s === undefined ? true : data.s; 
         if(!s) hepsiSecili = false;
         
@@ -427,39 +429,39 @@ function renderPanel() {
         const tr = document.createElement('tr');
         if(!s) tr.className = 'pasif-satir';
 
-        // Checkbox Cell
         const tdCb = document.createElement('td');
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.checked = s;
         tdCb.appendChild(cb);
 
-        // Name Cell (XSS Koruması: textContent)
         const tdName = document.createElement('td');
         tdName.textContent = kAd;
 
-        // Doğru Input
         const tdD = document.createElement('td');
         const inpD = document.createElement('input');
-        inpD.type = 'number'; inpD.min = 0; inpD.value = data.d; inpD.disabled = !s;
+        inpD.type = 'number'; inpD.min = 0; inpD.value = data.d || 0; inpD.disabled = !s;
         tdD.appendChild(inpD);
 
-        // Yanlış Input
         const tdY = document.createElement('td');
         const inpY = document.createElement('input');
-        inpY.type = 'number'; inpY.min = 0; inpY.value = data.y; inpY.disabled = !s;
+        inpY.type = 'number'; inpY.min = 0; inpY.value = data.y || 0; inpY.disabled = !s;
         tdY.appendChild(inpY);
 
-        // Net Cell
+        // Yeni Boş Sütunu
+        const tdB = document.createElement('td');
+        const inpB = document.createElement('input');
+        inpB.type = 'number'; inpB.min = 0; inpB.value = data.b || 0; inpB.disabled = !s;
+        tdB.appendChild(inpB);
+
         const tdNet = document.createElement('td');
         tdNet.className = 'fw-600';
         tdNet.textContent = s ? net.toFixed(2) : '-';
         if(s && net < 0) tdNet.style.color = 'var(--alert-color)';
 
-        tr.append(tdCb, tdName, tdD, tdY, tdNet);
+        tr.append(tdCb, tdName, tdD, tdY, tdB, tdNet);
         tbody.appendChild(tr);
 
-        // Akıllı Event Listenerlar (Tüm tabloyu yeniden çizmeyen DOM manipülasyonu)
         cb.addEventListener('change', (e) => {
             let isChecked = e.target.checked;
             veriNesnesiOlustur(kAd);
@@ -467,7 +469,7 @@ function renderPanel() {
             kaydet();
             
             tr.className = isChecked ? '' : 'pasif-satir';
-            inpD.disabled = inpY.disabled = !isChecked;
+            inpD.disabled = inpY.disabled = inpB.disabled = !isChecked;
             guncelleSatirArayuz(kAd, inpD.value, inpY.value, isChecked, tdNet);
             hesaplaAltToplam();
         });
@@ -481,12 +483,15 @@ function renderPanel() {
                 guncelleSatirArayuz(kAd, inpD.value, inpY.value, cb.checked, tdNet);
                 hesaplaAltToplam();
             } else {
-                tur === 'd' ? inpD.value = data.d : inpY.value = data.y; // Geri al
+                if(tur === 'd') inpD.value = data.d || 0;
+                else if(tur === 'y') inpY.value = data.y || 0;
+                else inpB.value = data.b || 0;
             }
         };
 
         inpD.addEventListener('input', (e) => handleInput('d', e.target.value));
         inpY.addEventListener('input', (e) => handleInput('y', e.target.value));
+        inpB.addEventListener('input', (e) => handleInput('b', e.target.value));
     });
 
     anaCb.checked = hepsiSecili;
@@ -497,17 +502,16 @@ function renderPanel() {
             db[aktifDers][aktifDenemeNo][kAd].s = isChecked;
         });
         kaydet();
-        renderPanel(); // Tümü seçilirse bir kereliğine toplu render
+        renderPanel(); 
     });
 
-    hesaplaAltToplam(); // İlk yüklemede toplamları hesapla
+    hesaplaAltToplam(); 
 }
 
-// Yardımcı DOM Veri Fonksiyonları
 function veriNesnesiOlustur(kAd) {
     if(!db[aktifDers]) db[aktifDers] = {}; 
     if(!db[aktifDers][aktifDenemeNo]) db[aktifDers][aktifDenemeNo] = {}; 
-    if(!db[aktifDers][aktifDenemeNo][kAd]) db[aktifDers][aktifDenemeNo][kAd] = {d:0, y:0, s:true};
+    if(!db[aktifDers][aktifDenemeNo][kAd]) db[aktifDers][aktifDenemeNo][kAd] = {d:0, y:0, b:0, s:true};
 }
 
 function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
@@ -517,38 +521,49 @@ function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
     tdNet.style.color = (s && net < 0) ? 'var(--alert-color)' : '';
 }
 
+// Güncellenmiş Soru Limiti Kontrolü (Doğru + Yanlış + Boş)
 function kontrolSoruLimiti(aktifKonu, tur, yeniDeger) {
     let digerTop = 0; 
     müfredat[aktifDers].forEach(k => { 
         let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
         if (s !== false) { 
+            let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
             if(k !== aktifKonu) {
-                digerTop += (Number(db[aktifDers]?.[aktifDenemeNo]?.[k]?.d || 0) + Number(db[aktifDers]?.[aktifDenemeNo]?.[k]?.y || 0)); 
+                digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
             } else {
-                digerTop += Number(tur === 'd' ? (db[aktifDers]?.[aktifDenemeNo]?.[k]?.y || 0) : (db[aktifDers]?.[aktifDenemeNo]?.[k]?.d || 0)); 
+                let dVal = tur === 'd' ? yeniDeger : Number(kData.d || 0);
+                let yVal = tur === 'y' ? yeniDeger : Number(kData.y || 0);
+                let bVal = tur === 'b' ? yeniDeger : Number(kData.b || 0);
+                digerTop += (dVal + yVal + bVal);
             }
         } 
     });
-    if((digerTop + yeniDeger) > SORU_LIMITLERI[aktifDers]) { 
-        showToast(`${aktifDers} maks ${SORU_LIMITLERI[aktifDers]} soru olabilir!`); 
+    
+    if(digerTop > SORU_LIMITLERI[aktifDers]) { 
+        showToast(`${aktifDers} dersi için Doğru, Yanlış ve Boş toplamı ${SORU_LIMITLERI[aktifDers]} soruyu geçemez!`, "error"); 
         return false;
     }
     return true;
 }
 
+// Güncellenmiş Alt Toplam Hesaplama
 function hesaplaAltToplam() {
-    let topD = 0, topY = 0;
+    let topD = 0, topY = 0, topB = 0;
     müfredat[aktifDers].forEach((kAd) => {
         let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd];
         if(data && data.s !== false) {
             topD += parseInt(data.d)||0;
             topY += parseInt(data.y)||0;
+            topB += parseInt(data.b)||0;
         }
     });
     let topNet = topD - (topY/4);
     document.getElementById('tdTopD').textContent = `D: ${topD}`;
     document.getElementById('tdTopY').textContent = `Y: ${topY}`;
-    document.getElementById('tdTopNet').textContent = `Net: ${topNet.toFixed(2)} | Boş: ${SORU_LIMITLERI[aktifDers]-(topD+topY)}`;
+    document.getElementById('tdTopB').textContent = `B: ${topB}`;
+    
+    let kalan = SORU_LIMITLERI[aktifDers] - (topD + topY + topB);
+    document.getElementById('tdTopNet').textContent = `Net: ${topNet.toFixed(2)} | İşaretlenmeyen: ${kalan}`;
 }
 
 // ============================================================================
@@ -573,7 +588,6 @@ function analizEt() {
     
     let sirali = Array.from(denemeNolar).sort((a,b) => a-b); 
     
-    // Boş Ekran Tasarımı (Empty State) XSS güvenli olarak eklendi
     const emptyStateHTML = `
         <div class="empty-state">
             <i class="fas fa-folder-open"></i>
@@ -586,9 +600,8 @@ function analizEt() {
         return;
     }
 
-    // Grid yapısını onar (Empty state varsa silindiği için)
     if(document.querySelector('.analiz-grid-3 .empty-state')) {
-        gosterSekme(); // Arayüzü sıfırla
+        gosterSekme(); 
         return;
     }
 
@@ -614,7 +627,8 @@ function analizEt() {
                 sS++; 
                 let d = Number(data?.d || 0);
                 let y = Number(data?.y || 0); 
-                let b = (d === 0 && y === 0) ? 1 : 0; 
+                // Artık boş soruları varsayımsal değil, doğrudan veri tabanındaki 'b' değerinden okuyor
+                let b = Number(data?.b || 0); 
                 
                 bS += b; yS += y; dS += d; 
                 
@@ -641,7 +655,6 @@ function analizEt() {
         if(sS > 0 && toplamSorulan > 0) {
             let isabet = (dS / toplamSorulan) * 100;
             
-            // XSS ve Güvenli Render için Element Oluşturma
             const itemDiv = document.createElement('div');
             itemDiv.className = 'analiz-item';
             
@@ -691,7 +704,7 @@ function analizEt() {
 }
 
 // ============================================================================
-// 10. YENİ ÖZELLİK: YAPAY ZEKA TAHMİNE DAYALI ANALİZ (Linear Regression)
+// 10. YAPAY ZEKA TAHMİNE DAYALI ANALİZ (Linear Regression)
 // ============================================================================
 function runAIPrediction() {
     const aiText = document.getElementById('aiPredictionText');
@@ -710,9 +723,8 @@ function runAIPrediction() {
     let yDataGY = [];
     let yDataGK = [];
 
-    // Verileri Topla
     son5.forEach((dNo, index) => {
-        xData.push(index + 1); // 1, 2, 3, 4, 5
+        xData.push(index + 1); 
         let gyNet = 0, gkNet = 0;
         
         Object.keys(müfredat).forEach(ders => {
@@ -733,7 +745,6 @@ function runAIPrediction() {
         yDataGK.push(gkNet);
     });
 
-    // Basit Lineer Regresyon (En Küçük Kareler Yöntemi)
     const calcLR = (x, y) => {
         let n = x.length;
         let sumX = x.reduce((a,b)=>a+b, 0);
@@ -749,12 +760,10 @@ function runAIPrediction() {
     let lrGY = calcLR(xData, yDataGY);
     let lrGK = calcLR(xData, yDataGK);
 
-    // Bir sonraki adıma (+2 birim süreye) projeksiyon yap
     let nextX = xData.length + 2; 
     let predGY = (lrGY.slope * nextX + lrGY.intercept).toFixed(2);
     let predGK = (lrGK.slope * nextX + lrGK.intercept).toFixed(2);
 
-    // Veri anomali kontrolü (Netler max limiti aşamaz)
     predGY = Math.min(60, Math.max(0, predGY));
     predGK = Math.min(60, Math.max(0, predGK));
 
@@ -788,7 +797,6 @@ function listeleGecmis() {
 
     let tS = 0, sSayisi = 0;
     
-    // Tablo (Masaüstü için table, Mobil için CSS ile karta dönüşür)
     let html = `<table><thead><tr>
         <th>No</th><th>Tarih</th><th>Süre</th><th>Türkçe</th><th>Matematik</th>
         <th>Tarih</th><th>Coğrafya</th><th>Vatandaşlık</th><th>GY Net</th><th>GK Net</th><th>Toplam</th>
@@ -867,7 +875,7 @@ function raporIndirCSV() {
         });
         
         let gy = net["Türkçe"] + net["Matematik"], gk = net["Tarih"] + net["Coğrafya"] + net["Vatandaşlık"];
-        csv += `${dNo},${tarih},${sure},${net["Türkçe"].toFixed(1)},${net["Matematik"].toFixed(1)},${net["Tarih"].toFixed(1)},${net["Coğrafya"].toFixed(1)},${net["Vatandaşlık"].toFixed(1)},${gy.toFixed(1)},${gk.toFixed(1)},${(gy+gk).toFixed(1)}\n`;
+        csv += `${dNo},${tarih},${sure},${net["Türkçe"].toFixed(2)},${net["Matematik"].toFixed(2)},${net["Tarih"].toFixed(2)},${net["Coğrafya"].toFixed(2)},${net["Vatandaşlık"].toFixed(2)},${gy.toFixed(2)},${gk.toFixed(2)},${(gy+gk).toFixed(2)}\n`;
     });
     
     let link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); 
