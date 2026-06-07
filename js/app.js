@@ -6,11 +6,57 @@ import { saveUserDataToDB, loadUserDataFromDB } from './db.js';
 const SORU_LIMITLERI = { "Türkçe": 30, "Matematik": 30, "Tarih": 27, "Coğrafya": 18, "Vatandaşlık": 15 };
 
 const müfredat = {
-    "Türkçe": ["Sözcükte Anlam", "Cümlede Anlam", "Paragraf", "Ses Bilgisi", "Sözcükte Yapı", "Sözcük Türleri", "Cümlenin Türleri", "Yazım Kuralları", "Noktalama İşaretleri", "Anlatım Bozuklukları", "Sözel Mantık"],
-    "Matematik": ["Temel Kavramlar", "Sayılar", "Sayı Kümeleri", "Bölme ve Bölünebilme Kuralları", "Asal Çarpanlara Ayırma", "EBOB-EKOK", "Birinci Dereceden Denklemler", "Rasyonel Sayılar", "Eşitsizlik", "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar", "Çarpanlara Ayırma", "Oran-Orantı", "Denklem Kurma Problemleri", "Yaş Problemleri", "Yüzde Problemleri", "Kâr-Zarar Problemleri", "Karışım Problemleri", "Hareket Problemleri", "Kümeler", "İşlem ve Modüler Aritmetik", "Permütasyon, Kombinasyon ve Olasılık", "Sayısal Mantık"],
-    "Tarih": ["İslamiyet Öncesi Türk Tarihi", "Türk-İslam Tarihi", "İlk Müslüman Türk Devletleri", "Anadolu Selçuklu Devleti Siyasi Tarihi", "Osmanlı Devleti Kültür ve Medeniyeti", "Osmanlı Kuruluş, Yükselme, Duraklama", "Osmanlı Gerileme ve Dağılma", "Trablusgarp Savaşı (1911-1912)", "1. Dünya Savaşı", "Kurtuluş Savaşına Hazırlık Dönemi", "Kurtuluş Savaşı Muharebeler ve Antlaşmalar", "Atatürk İlke ve İnkılapları", "Atatürk Dönemi Türk Dış Politikası", "Çağdaş Türk ve Dünya Tarihi"],
-    "Coğrafya": ["Türkiye'nin Coğrafi Konumu", "Matematik (Mutlak) Konum", "Özel (Göreceli) Konum", "Türkiye'nin Yerşekilleri", "Türkiye'nin Platoları ve Ovaları", "Dış Güçlerin Oluşturduğu Yerşekilleri", "Türkiye'de Toprak Oluşumu ve Tipleri", "Türkiye'nin Su Varlığı", "Doğal Afetler", "Türkiye'nin İklimi ve Bitki Örtüsü", "Türkiye'de Nüfus, Yerleşme ve Göç", "Türkiye'de Tarım, Hayvancılık ve Orman", "Madenler ve Enerji Kaynakları", "Ulaşım, Ticaret ve Turizm", "Türkiye'nin Coğrafi Bölgeleri"],
-    "Vatandaşlık": ["Hukukun Temel Kavramları", "Devlet Biçimleri Demokrasi", "Anayasa Hukukuna Giriş", "1982 Anayasasının Temel İlkeleri", "Yasama", "Yürütme", "Yargı", "Temel Hak Ve Hürriyetler", "İdare Hukuku", "Uluslararası Kuruluşlar", "Güncel Bilgiler"]
+    "Türkçe": [
+        "Ses Bilgisi", "Yazım Kuralları", "Noktalama İşaretleri", "Sözcükte Yapı", 
+        "Sözcük Türleri", "Zamirler", "Zarflar", "Edat ve Bağlaçlar", "Fiiller", 
+        "Fiilimsiler", "Fiilde Çatı", "Cümlenin Öğeleri", "Cümle Türleri", 
+        "Anlatım Bozuklukları", "Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam", 
+        "Sözel Mantık"
+    ],
+    "Matematik": [
+        "Temel Kavramlar", "Tek ve Çift Sayılar", "Asal Sayılar", "Faktöriyel", 
+        "Ardışık Sayılar", "Sayı Basamakları", "Bölme ve Bölünebilme", "Asal Çarpanlar", 
+        "Ebob - Ekok", "Rasyonel Sayılar", "Ondalıklı Sayılar", "Basit Eşitsizlik", 
+        "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar", "Çarpanlara Ayırma", 
+        "Oran - Orantı", "Sayı ve Kesir Problemleri", "Yaş Problemleri", "Karışım Problemleri", 
+        "İşçi ve Havuz Problemleri", "Yüzde - Kar - Zarar - Faiz Problemleri", "Hareket - Hız Problemleri", 
+        "Grafik Problemleri", "Kümeler ve Problemleri", "İşlem ve Modüler Aritmetik", 
+        "Permütasyon - Kombinasyon ve Olasılık", "Fonksiyonlar", "Sayısal Mantık",
+        "Geometri - Açılar", "Geometri - Üçgenler", "Geometri - Çokgenler ve Dörtgenler", 
+        "Geometri - Çember ve Daire", "Geometri - Analitik Geometri", "Geometri - Katı Cisimler"
+    ],
+    "Tarih": [
+        "İslamiyet Öncesi Türk Tarihi - İlk ve Orta Çağda Türk Dünyası", 
+        "İslamiyet Öncesi Türk Devletlerinde Kültür ve Uygarlık", 
+        "İlk Türk İslam Devletleri - Türklerin İslamiyet’i Kabulü", 
+        "İlk Türk - İslam Devletlerinde Kültür ve Uygarlık", 
+        "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiye’si", 
+        "Anadolu - Türkiye Selçuklu Devleti", 
+        "Anadolu Selçuklu Devleti Kültür ve Uygarlık", 
+        "Osmanlı Devleti Kuruluş Dönemi - Osmanlı Beylikten Devlete Geçiş", 
+        "Osmanlı Devleti Yükselme Dönemi - Dünya Gücü Osmanlı", 
+        "XVII. Yüzyıl Osmanlı Devleti Duraklama Dönemi - Değişen Dünya Dengeleri Karşısında Osmanlı Siyaseti", 
+        "XVIII. Yüzyıl Osmanlı Devleti Gerileme Dönemi - Uluslararası İlişkilerde Denge Stratejisi", 
+        "XIX. Yüzyıl Osmanlı Devleti Dağılma Dönemi", 
+        "Osmanlı Devleti Kültür ve Uygarlık", 
+        "İnkılap Tarihi", 
+        "Atatürk Dönemi Türk Dış Politikası", 
+        "Atatürk İlkeleri", 
+        "Çağdaş Türk ve Dünya Tarihi"
+    ],
+    "Coğrafya": [
+        "Türkiye'nin Coğrafi Konumu", "Matematik (Mutlak) Konum", "Özel (Göreceli) Konum", 
+        "Türkiye'nin Yerşekilleri", "Türkiye'nin Platoları ve Ovaları", "Dış Güçlerin Oluşturduğu Yerşekilleri", 
+        "Türkiye'de Toprak Oluşumu ve Tipleri", "Türkiye'nin Su Varlığı", "Doğal Afetler", 
+        "Türkiye'nin İklimi ve Bitki Örtüsü", "Türkiye'de Nüfus, Yerleşme ve Göç", 
+        "Türkiye'de Tarım, Hayvancılık ve Orman", "Madenler ve Enerji Kaynakları", 
+        "Ulaşım, Ticaret ve Turizm", "Türkiye'nin Coğrafi Bölgeleri"
+    ],
+    "Vatandaşlık": [
+        "Hukukun Temel Kavramları", "Devlet Biçimleri Demokrasi", "Anayasa Hukukuna Giriş", 
+        "1982 Anayasasının Temel İlkeleri", "Yasama", "Yürütme", "Yargı", 
+        "Temel Hak Ve Hürriyetler", "İdare Hukuku", "Uluslararası Kuruluşlar", "Güncel Bilgiler"
+    ]
 };
 
 // ============================================================================
@@ -192,7 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
         resArea.classList.remove('d-none');
     });
 
-    // Kılavuz (Yardım) Butonları Event Listener'ları
     document.getElementById('helpBtn')?.addEventListener('click', () => { 
         document.getElementById('helpModal').style.display = 'flex'; 
     });
@@ -342,7 +387,7 @@ function renderPanel() {
     const mainContent = document.getElementById('mainContent');
     let hepsiSecili = true;
     
-    // Boş sütunu tablo iskeletine eklendi
+    // BAŞLIKLAR RENKLENDİRİLDİ (Doğru: Yeşil, Yanlış: Kırmızı, Boş: Mavi)
     let html = `
         <div class="panel active">
             <div class="deneme-header">
@@ -368,9 +413,9 @@ function renderPanel() {
                         <tr>
                             <th style="width:50px;"><input type="checkbox" id="anaCheckbox" checked></th>
                             <th>Konu Adı</th>
-                            <th>Doğru</th>
-                            <th>Yanlış</th>
-                            <th>Boş</th>
+                            <th class="text-success">Doğru</th>
+                            <th class="text-danger">Yanlış</th>
+                            <th class="text-info">Boş</th>
                             <th>Net</th>
                         </tr>
                     </thead>
@@ -378,9 +423,9 @@ function renderPanel() {
                     <tfoot>
                         <tr style="background: rgba(0,0,0,0.05); font-weight:bold;">
                             <td colspan="2" style="text-align:right;">GENEL TOPLAM:</td>
-                            <td id="tdTopD">0</td>
-                            <td id="tdTopY">0</td>
-                            <td id="tdTopB">0</td>
+                            <td id="tdTopD" class="text-success fw-bold">0</td>
+                            <td id="tdTopY" class="text-danger fw-bold">0</td>
+                            <td id="tdTopB" class="text-info fw-bold">0</td>
                             <td id="tdTopNet" class="text-primary">Net: 0 | İşaretlenmeyen: 0</td>
                         </tr>
                     </tfoot>
@@ -419,7 +464,6 @@ function renderPanel() {
     });
 
     müfredat[aktifDers].forEach((kAd) => {
-        // Yeni "Boş" (b: 0) parametresi veri nesnesine dahil edildi
         let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {d:0, y:0, b:0, s:true}; 
         let s = data.s === undefined ? true : data.s; 
         if(!s) hepsiSecili = false;
@@ -438,20 +482,23 @@ function renderPanel() {
         const tdName = document.createElement('td');
         tdName.textContent = kAd;
 
+        // İNPUTLAR RENKLENDİRİLDİ VE KALINLAŞTIRILDI
         const tdD = document.createElement('td');
         const inpD = document.createElement('input');
         inpD.type = 'number'; inpD.min = 0; inpD.value = data.d || 0; inpD.disabled = !s;
+        inpD.className = 'text-success fw-bold';
         tdD.appendChild(inpD);
 
         const tdY = document.createElement('td');
         const inpY = document.createElement('input');
         inpY.type = 'number'; inpY.min = 0; inpY.value = data.y || 0; inpY.disabled = !s;
+        inpY.className = 'text-danger fw-bold';
         tdY.appendChild(inpY);
 
-        // Yeni Boş Sütunu
         const tdB = document.createElement('td');
         const inpB = document.createElement('input');
         inpB.type = 'number'; inpB.min = 0; inpB.value = data.b || 0; inpB.disabled = !s;
+        inpB.className = 'text-info fw-bold';
         tdB.appendChild(inpB);
 
         const tdNet = document.createElement('td');
@@ -521,7 +568,6 @@ function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
     tdNet.style.color = (s && net < 0) ? 'var(--alert-color)' : '';
 }
 
-// Güncellenmiş Soru Limiti Kontrolü (Doğru + Yanlış + Boş)
 function kontrolSoruLimiti(aktifKonu, tur, yeniDeger) {
     let digerTop = 0; 
     müfredat[aktifDers].forEach(k => { 
@@ -546,7 +592,6 @@ function kontrolSoruLimiti(aktifKonu, tur, yeniDeger) {
     return true;
 }
 
-// Güncellenmiş Alt Toplam Hesaplama
 function hesaplaAltToplam() {
     let topD = 0, topY = 0, topB = 0;
     müfredat[aktifDers].forEach((kAd) => {
@@ -627,7 +672,6 @@ function analizEt() {
                 sS++; 
                 let d = Number(data?.d || 0);
                 let y = Number(data?.y || 0); 
-                // Artık boş soruları varsayımsal değil, doğrudan veri tabanındaki 'b' değerinden okuyor
                 let b = Number(data?.b || 0); 
                 
                 bS += b; yS += y; dS += d; 
@@ -659,7 +703,8 @@ function analizEt() {
             itemDiv.className = 'analiz-item';
             
             const textDiv = document.createElement('div');
-            textDiv.innerHTML = `<strong>${k}</strong>${tI} <div class="fs-13 text-muted mt-5">${sS} Sınav: ${dS}D, ${yS}Y, ${bS}B</div>`;
+            // ANALİZ METİNLERİ DE RENKLENDİRİLDİ
+            textDiv.innerHTML = `<strong>${k}</strong>${tI} <div class="fs-13 mt-5"><span class="text-muted">${sS} Sınav:</span> <span class="text-success fw-bold">${dS}D</span>, <span class="text-danger fw-bold">${yS}Y</span>, <span class="text-info fw-bold">${bS}B</span></div>`;
             
             const percDiv = document.createElement('div');
             percDiv.className = 'fw-bold fs-18';
