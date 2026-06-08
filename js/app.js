@@ -320,7 +320,16 @@ document.addEventListener('DOMContentLoaded', () => {
         resArea.classList.remove('d-none');
     });
 
-    document.getElementById('helpBtn')?.addEventListener('click', () => { document.getElementById('helpModal').style.display = 'flex'; });
+    document.addEventListener('click', (e) => {
+    // Tıklanan buton veya butonun içindeki ikon ise
+    if (e.target.closest('#helpBtn')) {
+        e.preventDefault();
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+});
     document.getElementById('closeHelpBtn')?.addEventListener('click', () => { document.getElementById('helpModal').style.display = 'none'; });
     document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => { document.getElementById('silModal').style.display = 'none'; });
 
