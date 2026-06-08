@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPSS 2026 | Deneme Analiz</title>
     
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
     <circle cx='50' cy='50' r='40' fill='none' stroke='%233b82f6' stroke-width='6'/>
     <circle cx='50' cy='50' r='20' fill='none' stroke='%233b82f6' stroke-width='6'/>
@@ -71,15 +76,33 @@
             <h1><i class="fas fa-graduation-cap"></i> KPSS Hedef & Analiz </h1>
             <div class="flex-row align-center gap-10">
                 <span id="userEmailDisplay" class="fs-14 text-success fw-bold"></span>
-                <button id="helpBtn" class="btn-info"><i class="fas fa-question-circle"></i> Kılavuz</button>
-                <button class="theme-toggle" id="themeBtn"><i class="fas fa-sun"></i> Gündüz Modu</button>
                 <button id="logoutBtn" class="btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
+                <button class="theme-toggle" id="themeBtn"><i class="fas fa-sun"></i> Gündüz Modu</button>
             </div>
         </div>
         
         <div class="nav-buttons" id="dersNav"></div>
         
         <div id="mainContent"></div>
+
+        <div class="panel" id="profilPanel">
+            <h2 class="mt-0"><i class="fas fa-user-cog"></i> Profil ve Hesap Ayarları</h2>
+            
+            <div class="analiz-grid mb-25">
+                <div class="card-box p-20 br-10 border-standard">
+                    <h3 class="mt-0 text-primary"><i class="fas fa-key"></i> Şifre Değiştir</h3>
+                    <p class="fs-13 text-muted">Hesabınızın şifresini güvenli bir şekilde güncelleyin.</p>
+                    <input type="password" id="profilYeniSifre" placeholder="Yeni Şifreniz (En az 6 karakter)" class="auth-input">
+                    <button id="btnSifreGuncelle" class="btn-primary w-100"><i class="fas fa-save"></i> Şifreyi Güncelle</button>
+                </div>
+                
+                <div class="card-box p-20 br-10 border-standard" style="border-color: var(--alert-color);">
+                    <h3 class="mt-0 text-danger"><i class="fas fa-user-slash"></i> Hesabı Sil</h3>
+                    <p class="fs-13 text-muted">Dikkat! Bu işlem geri alınamaz. Buluttaki tüm deneme verileriniz ve kimlik bilgileriniz kalıcı olarak silinir.</p>
+                    <button id="btnHesapSil" class="btn-danger w-100 mt-15"><i class="fas fa-trash-alt"></i> Hesabımı ve Verilerimi Sil</button>
+                </div>
+            </div>
+        </div>
 
         <div class="panel" id="eksikPanel">
             <h2 class="flex-between align-center flex-wrap gap-10 mt-0">
@@ -176,6 +199,18 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="hesapSilModal">
+        <div class="modal-box">
+            <div class="modal-icon fs-48 mb-10 text-danger"><i class="fas fa-user-slash"></i></div>
+            <div class="fs-18 fw-600 mb-10 text-main">Hesabı Sil?</div>
+            <div class="fs-14 text-muted mb-25">Tüm verileriniz ve hesabınız kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?</div>
+            <div class="flex-row gap-12">
+                <button id="cancelHesapSilBtn" class="btn-modal-cancel">İptal</button>
+                <button id="confirmHesapSilBtn" class="btn-modal-confirm">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="helpModal">
         <div class="modal-box" style="max-width: 700px; text-align: left; max-height: 85vh; overflow-y: auto;">
             <div class="flex-between align-center border-bottom pb-10 mb-15">
@@ -187,30 +222,29 @@
                 <p class="text-muted mb-20 mt-0">Sistemin tüm gücünü kullanabilmek için sekmelerin ne işe yaradığını aşağıdan inceleyebilirsiniz:</p>
 
                 <h4 class="text-primary mt-0 mb-5"><i class="fas fa-book"></i> 1. Dersler Sekmesi (Veri Girişi)</h4>
-                <p class="mt-0 mb-15 text-muted"><strong>Ne Yapılır?</strong> Deneme sonuçlarınızı sisteme girdiğiniz ana ekrandır. <br>
-                Soru limitleri otomatik korunur. Doğru, yanlış ve <strong>boş</strong> bıraktığınız soru sayılarını tam girmeniz analizin kalitesini artırır.<br>
-                🔍 <strong>Akıllı Arama:</strong> Konu havuzu genişlediği için sağ üstteki arama çubuğunu kullanarak istediğiniz konuyu anında bulup giriş yapabilirsiniz.<br>
-                🪄 <strong>İşlemsizleri Kapat:</strong> "İşlemsizleri Kapat" butonuna tıklayarak, o ders için hiç değer girmediğiniz (0 doğru, 0 yanlış, 0 boş) tüm konuların analiz dışı bırakılmasını tek tıkla sağlayabilirsiniz.</p>
+                <p class="mt-0 mb-15 text-muted">Deneme sonuçlarınızı sisteme girdiğiniz ana ekrandır. Mobilde rahat giriş için <strong>+ ve - butonlarını</strong> kullanabilirsiniz.<br>
+                🔍 <strong>Akıllı Arama:</strong> Sağ üstteki arama çubuğunu kullanarak istediğiniz konuyu anında bulabilirsiniz.<br>
+                🪄 <strong>İşlemsizleri Kapat:</strong> Hiç değer girmediğiniz konuları analiz dışı bırakmak için bu butonu kullanabilirsiniz.</p>
                 
                 <h4 class="text-warning mt-0 mb-5"><i class="fas fa-chart-pie"></i> 2. Analiz & Trend Sekmesi</h4>
                 <p class="mt-0 mb-15 text-muted"><strong>Ne Görülür?</strong> Sistem girdiğiniz netleri okur ve konularınızı 3 ana kategoriye ayırır:<br>
                 🔴 <strong>Zayıf (%50 Altı):</strong> İlk müdahale etmeniz gereken, puan kaybının en çok yaşandığı konular.<br>
                 🟡 <strong>Geliştirilmeli (%50-85):</strong> Temelinizin olduğu ancak pratik eksiğinizin bulunduğu konular.<br>
                 🟢 <strong>Başarılı (%85+):</strong> Sadece genel tekrarlarla korunması gereken güçlü alanlarınız.<br>
-                <em>Ayrıca bu sekmedeki "Kör Nokta Radarı", son 3 denemedir atladığınız/çözmediğiniz konuları tespit edip sizi uyarır.</em></p>
+                <em>Ayrıca bu sekmedeki "Kör Nokta Radarı", son 3 denemedir atladığınız konuları tespit edip sizi uyarır.</em></p>
 
                 <h4 class="text-purple mt-0 mb-5"><i class="fas fa-bullseye"></i> 3. Hedef & Geçmiş Sekmesi</h4>
                 <p class="mt-0 mb-15 text-muted"><strong>Ne Yapılır?</strong> GY ve GK için net hedeflerinizi belirleyip kaydedebilirsiniz.<br>
                 <strong>Ne Görülür?</strong> <br>
-                🤖 <strong>Yapay Zeka:</strong> En az 5 deneme girdiğinizde sistem son ivmenizi hesaplar ve sınava kadar netlerinizin hangi banda oturacağını matematiksel olarak tahmin eder.<br>
-                📊 <strong>Geçmiş Tablosu:</strong> Tüm denemelerinizin toplu özetini, ortalama sınav sürenizi görürsünüz. İsterseniz buradan tüm veriyi <strong>Excel</strong> veya <strong>PDF</strong> olarak cihazınıza indirebilirsiniz.</p>
+                🤖 <strong>Yapay Zeka:</strong> En az 5 deneme girdiğinizde sistem son ivmenizi hesaplar ve sınava kadar netlerinizin hangi banda oturacağını tahmin eder.<br>
+                📊 <strong>Geçmiş Tablosu:</strong> Tüm denemelerinizin toplu özetini görür, <strong>Excel</strong> veya <strong>PDF</strong> olarak cihazınıza indirebilirsiniz.</p>
 
                 <h4 class="text-success mt-0 mb-5"><i class="fas fa-chart-area"></i> 4. Grafik Sekmesi</h4>
-                <p class="mt-0 mb-15 text-muted"><strong>Ne Görülür?</strong> Netlerinizin zaman içindeki gelişimini görsel bir grafik üzerinde incelersiniz. Filtreleri kullanarak isterseniz Genel Toplam gidişatınızı, isterseniz sadece "Tarih" veya "Matematik" gibi spesifik derslerdeki net eğrinizi görebilirsiniz.</p>
+                <p class="mt-0 mb-15 text-muted">Netlerinizin zaman içindeki gelişimini incelersiniz. Sistem girdiğiniz verilere göre hedef çizginizi ve tam ortalamanızı (Örn: Ort: 84.25) otomatik olarak grafik üzerinde gösterir.</p>
 
                 <div class="p-10 br-6 mt-20" style="background: rgba(14, 165, 233, 0.1); border-left: 4px solid #0ea5e9;">
-                    <h4 class="text-info mt-0 mb-5"><i class="fas fa-wifi"></i> Çevrimdışı Çalışma Mimarisi</h4>
-                    <p class="mt-0 m-0 text-muted" style="font-size: 13px;">Sistem internet bağlantısı gerektirmez. İnternetiniz kopsa bile çalışmaya devam edebilirsiniz. Verileriniz anında cihazınıza kaydedilir ve internet geldiğinde otomatik olarak bulut sunucularına yedeklenir.</p>
+                    <h4 class="text-info mt-0 mb-5"><i class="fas fa-wifi"></i> Çevrimdışı Çalışma (PWA)</h4>
+                    <p class="mt-0 m-0 text-muted" style="font-size: 13px;">Bu sistemi telefonunuzun ana ekranına ekleyerek gerçek bir mobil uygulama gibi kullanabilirsiniz. İnternetiniz kopsa bile veriler cihazınıza kaydedilir, internet gelince buluta yedeklenir.</p>
                 </div>
             </div>
         </div>
