@@ -22,25 +22,52 @@ export const auth = getAuth(app);
 const database = getDatabase(app);
 
 // ============================================================================
-// 2. ÇEVRİMDIŞI DESTEKLİ KAYIT SİSTEMİ (Conflict Resolution ile)
+// 2. VERİ TEMİZLEME (Firebase Yasaklı Karakterleri Kaldırma)
+// ============================================================================
+// Firebase anahtarlarında ".", "#", "$", "/", "[", "]" kullanılamaz.
+function sanitizeKey(key) {
+    if (typeof key !== 'string') return key;
+    return key.replace(/[.$#[\]/]/g, '_');
+}
+
+// Obje içindeki tüm anahtarları derinlemesine temizler
+function sanitizeData(data) {
+    if (typeof data !== 'object' || data === null) return data;
+    const newData = Array.isArray(data) ? [] : {};
+    for (let key in data) {
+        const cleanKey = sanitizeKey(key);
+        newData[cleanKey] = sanitizeData(data[key]);
+    }
+    return newData;
+}
+
+// ============================================================================
+// 3. ÇEVRİMDIŞI DESTEKLİ KAYIT SİSTEMİ (Conflict Resolution ile)
 // ============================================================================
 export async function saveUserDataToDB(uid, data) {
+    // 1. Her koşulda önce yerel cihaza (localStorage) yedekle
     localStorage.setItem(`kpss_offline_${uid}`, JSON.stringify(data));
     
-    if (navigator.onLine) {
+    // 2. İnternet bağlantısı varsa Firebase'e gönder
+    if (navigator.onLine && data) {
         try {
+            // Veriyi Firebase'e göndermeden önce karakterlerden temizle
+            const cleanData = sanitizeData(data);
             const userRef = ref(database, 'users/' + uid);
             
+            // Veri ezilmesini (Overwrite) önlemek için önce sunucudaki son güncellenme tarihini al
             const snapshot = await get(child(ref(database), `users/${uid}/lastUpdated`));
             const serverLastUpdated = snapshot.exists() ? snapshot.val() : 0;
             const clientLastUpdated = data.lastUpdated || 0;
 
+            // Çatışma Çözümü: Eğer sunucudaki veri bizim göndereceğimizden daha yeniyse, üzerine yazma!
             if (serverLastUpdated > clientLastUpdated) {
                 console.warn("Sunucudaki veri daha güncel. Veri ezilmesini önlemek için işlem iptal edildi.");
                 return;
             }
 
-            await update(userRef, data);
+            // set() yerine update() kullanılarak sadece değişenler güncellenir
+            await update(userRef, cleanData);
             
         } catch (error) {
             console.error("Buluta kaydetme hatası (arka planda tekrar denenecek):", error);
@@ -49,17 +76,19 @@ export async function saveUserDataToDB(uid, data) {
 }
 
 // ============================================================================
-// 3. ÇEVRİMDIŞI DESTEKLİ VERİ ÇEKME SİSTEMİ (Akıllı Senkronizasyon)
+// 4. ÇEVRİMDIŞI DESTEKLİ VERİ ÇEKME SİSTEMİ (Akıllı Senkronizasyon)
 // ============================================================================
 export async function loadUserDataFromDB(uid) {
     let serverData = null;
     let localData = null;
 
+    // A. Önce cihazdaki yerel veriyi al
     const localRaw = localStorage.getItem(`kpss_offline_${uid}`);
     if (localRaw) {
         localData = JSON.parse(localRaw);
     }
 
+    // B. İnternet varsa sunucudaki veriyi al
     if (navigator.onLine) {
         try {
             const dbRef = ref(database);
@@ -73,15 +102,18 @@ export async function loadUserDataFromDB(uid) {
         }
     }
 
+    // C. ÇATIŞMA ÇÖZÜMÜ (CONFLICT RESOLUTION) - Hangi veri daha güncel?
     if (serverData && localData) {
         const serverTime = serverData.lastUpdated || 0;
         const localTime = localData.lastUpdated || 0;
 
         if (serverTime > localTime) {
+            // Sunucudaki veri daha güncel: Yereli güncelle ve sunucu verisini kullan
             localStorage.setItem(`kpss_offline_${uid}`, JSON.stringify(serverData));
             return serverData;
         } 
         else if (localTime > serverTime) {
+            // Cihazdaki çevrimdışı veri daha yeni: Hemen sunucuya yolla ve yereli kullan
             saveUserDataToDB(uid, localData);
             return localData;
         } 
@@ -90,14 +122,17 @@ export async function loadUserDataFromDB(uid) {
         }
     }
 
+    // D. Sadece sunucuda veri varsa (Başka cihazdan girilmişse vs.)
     if (serverData) {
         localStorage.setItem(`kpss_offline_${uid}`, JSON.stringify(serverData));
         return serverData;
     }
     
+    // E. Sadece yerelde veri varsa (İlk kez çevrimdışı girilmişse)
     if (localData) {
         return localData;
     }
 
+    // F. Hiçbir yerde veri yoksa yepyeni bir başlangıç
     return {};
 }
