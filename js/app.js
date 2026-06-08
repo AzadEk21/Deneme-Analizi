@@ -1,4 +1,5 @@
-import { saveUserDataToDB, loadUserDataFromDB } from './db.js';
+import { saveUserDataToDB, loadUserDataFromDB, auth } from './db.js';
+import { updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // ============================================================================
 // 1. MÜFREDAT VE SABİTLER
@@ -75,7 +76,6 @@ let aktifAnalizDersi = "Türkçe";
 let aktifAramaTerimi = "";
 let mevcutTema = localStorage.getItem('kpss_tema') || 'dark';
 
-// Başlangıç Tema Ayarı
 document.documentElement.setAttribute('data-theme', mevcutTema);
 const tBtn = document.getElementById('themeBtn');
 if (tBtn) {
@@ -114,12 +114,11 @@ function kaydet() {
 }
 
 // ============================================================================
-// YENİ ÖZELLİK: HAYALET VERİ (GHOST DATA) TEMİZLEYİCİSİ
+// HAYALET VERİ (GHOST DATA) TEMİZLEYİCİSİ
 // ============================================================================
 function temizleHayaletVeriler() {
     let degisiklikYapildi = false;
 
-    // 1. Adım: 0 numaralı veya negatif hatalı girişleri sil
     Object.keys(db).forEach(k => {
         if(k === 'lastUpdated') return;
         if(typeof db[k] === 'object') {
@@ -133,7 +132,6 @@ function temizleHayaletVeriler() {
         }
     });
 
-    // 2. Adım: İçi tamamen boş olan ve tarihi girilmemiş hayalet denemeleri sil
     let dNolar = new Set();
     Object.keys(db).forEach(d => { 
         if(d !== 'meta' && d !== 'lastUpdated') {
@@ -149,37 +147,25 @@ function temizleHayaletVeriler() {
             if(db[ders] && db[ders][no]) {
                 Object.keys(db[ders][no]).forEach(k => {
                     let data = db[ders][no][k];
-                    if(data && (parseInt(data.d) > 0 || parseInt(data.y) > 0 || parseInt(data.b) > 0)) {
-                        tamamenBosMu = false;
-                    }
+                    if(data && (parseInt(data.d) > 0 || parseInt(data.y) > 0 || parseInt(data.b) > 0)) tamamenBosMu = false;
                 });
             }
         });
 
-        // Eğer hiçbir net girilmemişse VE meta'da tarih belirtilmemişse, bu bir hayalettir, yok et.
         if(tamamenBosMu && !db.meta?.[no]?.tarih) {
-            Object.keys(db).forEach(d => {
-                if(db[d]?.[no]) delete db[d][no];
-            });
+            Object.keys(db).forEach(d => { if(db[d]?.[no]) delete db[d][no]; });
             degisiklikYapildi = true;
         }
     });
 
-    // Eğer temizlik yapıldıysa veritabanını yeni haliyle buluta gönder
     if(degisiklikYapildi) saveUserDataToDB(currentUid, db); 
 }
 
 // ============================================================================
 // 4. ÇEVRİMDIŞI / ÇEVRİMİÇİ AĞ YÖNETİMİ
 // ============================================================================
-window.addEventListener('online', () => {
-    showToast("İnternet bağlantısı sağlandı. Veriler buluta eşitleniyor...", "info");
-    kaydet();
-});
-
-window.addEventListener('offline', () => { 
-    showToast("İnternet koptu. Veriler cihazınıza (çevrimdışı) kaydediliyor.", "warning"); 
-});
+window.addEventListener('online', () => { showToast("İnternet bağlantısı sağlandı. Veriler eşitleniyor...", "info"); kaydet(); });
+window.addEventListener('offline', () => { showToast("İnternet koptu. Veriler cihaza kaydediliyor.", "warning"); });
 
 // ============================================================================
 // 5. BAŞLATMA (INIT) VE TEMİZLEME
@@ -193,40 +179,76 @@ export async function initUserApp(uid) {
         db = userData || {};
         if(!db.meta) db.meta = {};
         
-        // Veritabanı yüklendiği an arka planda sessizce hayalet temizliği yap
         temizleHayaletVeriler();
         
         const savedGy = localStorage.getItem(`gy_target_${uid}`); 
         const savedGk = localStorage.getItem(`gk_target_${uid}`);
-        
         if(savedGy) document.getElementById("gy-target").value = savedGy; 
         if(savedGk) document.getElementById("gk-target").value = savedGk;
         
         renderNav(); 
         gosterSekme(); 
         showToast("Veriler başarıyla yüklendi!", "success");
-    } catch (error) { 
-        showToast("Veri çekme hatası.", "error"); 
-    }
+    } catch (error) { showToast("Veri çekme hatası.", "error"); }
 }
 
 export function clearUserApp() { 
-    currentUid = null; 
-    db = {}; 
-    document.getElementById('mainContent').innerHTML = ''; 
+    currentUid = null; db = {}; document.getElementById('mainContent').innerHTML = ''; 
 }
 
 // ============================================================================
-// 6. EVENT LISTENER'LAR 
+// 6. EVENT LISTENER'LAR (PWA, Profil ve Diğerleri)
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
     
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(() => {
+            console.log('PWA Service Worker Aktif.');
+        }).catch(err => console.log('SW Kayıt Hatası:', err));
+    }
+
     document.getElementById('themeBtn')?.addEventListener('click', () => {
         mevcutTema = mevcutTema === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', mevcutTema);
         localStorage.setItem('kpss_tema', mevcutTema);
         document.getElementById('themeBtn').innerHTML = mevcutTema === 'dark' ? '<i class="fas fa-sun"></i> Gündüz Modu' : '<i class="fas fa-moon"></i> Gece Modu';
         if(aktifSekme === "grafik") cizGrafik();
+    });
+
+    document.getElementById('btnSifreGuncelle')?.addEventListener('click', async () => {
+        const yeniSifre = document.getElementById('profilYeniSifre').value;
+        if(yeniSifre.length < 6) return showToast("Şifre en az 6 karakter olmalıdır.", "warning");
+        try {
+            await updatePassword(auth.currentUser, yeniSifre);
+            showToast("Şifreniz başarıyla güncellendi!", "success");
+            document.getElementById('profilYeniSifre').value = '';
+        } catch(error) {
+            showToast("Güvenlik nedeniyle lütfen çıkış yapıp tekrar girdikten sonra deneyin.", "error");
+        }
+    });
+
+    // Hesap Silme Modalı Açma
+    document.getElementById('btnHesapSil')?.addEventListener('click', () => {
+        document.getElementById('hesapSilModal').style.display = 'flex';
+    });
+
+    // Hesap Silme Modalı İptal
+    document.getElementById('cancelHesapSilBtn')?.addEventListener('click', () => {
+        document.getElementById('hesapSilModal').style.display = 'none';
+    });
+
+    // Hesap Silme Modalı Onay (Silme İşlemi)
+    document.getElementById('confirmHesapSilBtn')?.addEventListener('click', async () => {
+        try {
+            document.getElementById('hesapSilModal').style.display = 'none';
+            showToast("Hesap siliniyor...", "warning");
+            
+            await saveUserDataToDB(currentUid, null); // Verileri sil
+            await deleteUser(auth.currentUser);       // Hesabı sil
+            showToast("Hesabınız ve verileriniz tamamen silindi.", "info");
+        } catch(error) {
+            showToast("Güvenlik nedeniyle lütfen çıkış yapıp tekrar girdikten sonra silmeyi deneyin.", "error");
+        }
     });
 
     document.getElementById('saveTargetsBtn')?.addEventListener('click', () => {
@@ -256,18 +278,15 @@ document.addEventListener('DOMContentLoaded', () => {
             müfredat[ders].forEach(k => { 
                 let data = db[ders]?.[dNo]?.[k];
                 if (!data || data.s !== false) { 
-                    let d = data?.d || 0; 
-                    let y = data?.y || 0; 
+                    let d = data?.d || 0; let y = data?.y || 0; 
                     n += (d - (y / 4)); 
                 }
             });
-            if(ders === "Türkçe" || ders === "Matematik") gyCurrent += n; 
-            else gkCurrent += n;
+            if(ders === "Türkçe" || ders === "Matematik") gyCurrent += n; else gkCurrent += n;
         });
 
         const gyPerc = Math.min(100, Math.max(0, (gyCurrent / gyTarget) * 100)).toFixed(1);
         const gkPerc = Math.min(100, Math.max(0, (gkCurrent / gkTarget) * 100)).toFixed(1);
-        
         const totalTarget = gyTarget + gkTarget; 
         const totalCurrent = gyCurrent + gkCurrent;
         const totalPerc = ((totalCurrent / totalTarget) * 100).toFixed(1);
@@ -301,41 +320,24 @@ document.addEventListener('DOMContentLoaded', () => {
         resArea.classList.remove('d-none');
     });
 
-    document.getElementById('helpBtn')?.addEventListener('click', () => { 
-        document.getElementById('helpModal').style.display = 'flex'; 
-    });
-    document.getElementById('closeHelpBtn')?.addEventListener('click', () => { 
-        document.getElementById('helpModal').style.display = 'none'; 
-    });
+    document.getElementById('helpBtn')?.addEventListener('click', () => { document.getElementById('helpModal').style.display = 'flex'; });
+    document.getElementById('closeHelpBtn')?.addEventListener('click', () => { document.getElementById('helpModal').style.display = 'none'; });
+    document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => { document.getElementById('silModal').style.display = 'none'; });
 
-    document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => {
-        document.getElementById('silModal').style.display = 'none';
-    });
-
-    // SİLME İŞLEMİ GÜNCELLENDİ (Hayalet Üretimini Engeller)
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
-        let silinenNo = aktifDenemeNo; // Önce silinecek numarayı hafızaya al
-        
-        Object.keys(db).forEach(d => { 
-            if(db[d]?.[silinenNo]) delete db[d][silinenNo]; 
-        });
+        let silinenNo = aktifDenemeNo; 
+        Object.keys(db).forEach(d => { if(db[d]?.[silinenNo]) delete db[d][silinenNo]; });
         if(db.meta?.[silinenNo]) delete db.meta[silinenNo]; 
         
-        // Silme bittikten sonra HAYALET veri oluşmaması için aktif denemeyi 1 geriye at
         aktifDenemeNo = Math.max(1, silinenNo - 1);
-        
-        kaydet(); 
-        renderPanel(); 
+        kaydet(); renderPanel(); 
         document.getElementById('silModal').style.display = 'none'; 
         showToast(`${silinenNo}. Deneme tamamen silindi.`, "success");
     });
 
     document.getElementById('exportCsvBtn')?.addEventListener('click', raporIndirCSV);
     document.getElementById('printPdfBtn')?.addEventListener('click', () => window.print());
-
-    window.addEventListener('resize', () => { 
-        if(aktifSekme === "grafik") cizGrafik(); 
-    });
+    window.addEventListener('resize', () => { if(aktifSekme === "grafik") cizGrafik(); });
 });
 
 // ============================================================================
@@ -346,15 +348,10 @@ function renderNav() {
     nav.innerHTML = '';
     
     Object.keys(müfredat).forEach(ders => {
-        const btn = document.createElement('button'); 
-        btn.textContent = ders;
+        const btn = document.createElement('button'); btn.textContent = ders;
         if(ders === aktifDers && aktifSekme === "ders") btn.className = 'active';
         btn.addEventListener('click', () => { 
-            aktifDers = ders; 
-            aktifSekme = "ders"; 
-            aktifAramaTerimi = ""; 
-            renderNav(); 
-            gosterSekme(); 
+            aktifDers = ders; aktifSekme = "ders"; aktifAramaTerimi = ""; renderNav(); gosterSekme(); 
         });
         nav.appendChild(btn);
     });
@@ -362,7 +359,8 @@ function renderNav() {
     const paneller = [ 
         { id: 'analiz', text: 'Analiz & Trend', cls: 'btn-analiz', icon: 'fa-chart-pie' }, 
         { id: 'hedef', text: 'Hedef & Geçmiş', cls: 'btn-hedef', icon: 'fa-bullseye' }, 
-        { id: 'grafik', text: 'Grafik', cls: 'btn-grafik', icon: 'fa-chart-area' } 
+        { id: 'grafik', text: 'Grafik', cls: 'btn-grafik', icon: 'fa-chart-area' },
+        { id: 'profil', text: 'Profil', cls: 'btn-info', icon: 'fa-user-cog' }
     ];
     
     paneller.forEach(p => {
@@ -370,89 +368,70 @@ function renderNav() {
         btn.innerHTML = `<i class="fas ${p.icon}"></i> ${p.text}`; 
         btn.className = `${p.cls} ${aktifSekme === p.id ? "active" : ""}`;
         btn.addEventListener('click', () => { 
-            aktifSekme = p.id; 
-            aktifAramaTerimi = ""; 
-            renderNav(); 
-            gosterSekme(); 
+            aktifSekme = p.id; aktifAramaTerimi = ""; renderNav(); gosterSekme(); 
         });
         nav.appendChild(btn);
     });
 }
 
 function gosterSekme() {
-    ['mainContent', 'eksikPanel', 'hedefPanel', 'grafikPanel'].forEach(id => {
+    ['mainContent', 'eksikPanel', 'hedefPanel', 'grafikPanel', 'profilPanel'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.style.display = "none";
     });
     
-    if(aktifSekme === "ders") { 
-        document.getElementById('mainContent').style.display = "block"; 
-        renderPanel(); 
-    }
+    if(aktifSekme === "ders") { document.getElementById('mainContent').style.display = "block"; renderPanel(); }
     else if(aktifSekme === "analiz") { 
         document.getElementById('eksikPanel').style.display = "block"; 
-        
         const dersFiltreKutusu = document.getElementById('analizDersFiltreler');
         dersFiltreKutusu.innerHTML = '';
         Object.keys(müfredat).forEach(d => {
             const btn = document.createElement('button');
-            btn.className = `pill-btn ${aktifAnalizDersi === d ? 'active' : ''}`;
-            btn.textContent = d;
+            btn.className = `pill-btn ${aktifAnalizDersi === d ? 'active' : ''}`; btn.textContent = d;
             btn.addEventListener('click', () => {
                 aktifAnalizDersi = d;
                 dersFiltreKutusu.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                analizEt();
+                btn.classList.add('active'); analizEt();
             });
             dersFiltreKutusu.appendChild(btn);
         });
 
-        document.querySelectorAll('#analizFiltreler .pill-btn').forEach(btn => {
-            btn.replaceWith(btn.cloneNode(true)); 
-        });
+        document.querySelectorAll('#analizFiltreler .pill-btn').forEach(btn => { btn.replaceWith(btn.cloneNode(true)); });
         document.querySelectorAll('#analizFiltreler .pill-btn').forEach(btn => {
             btn.addEventListener('click', (e) => { 
                 aktifAnalizFiltresi = parseInt(e.target.getAttribute('data-filter')); 
                 document.querySelectorAll('#analizFiltreler .pill-btn').forEach(b => b.classList.remove('active')); 
-                e.target.classList.add('active'); 
-                analizEt(); 
+                e.target.classList.add('active'); analizEt(); 
             });
         });
-
         analizEt(); 
     }
     else if(aktifSekme === "hedef") { 
         document.getElementById('hedefPanel').style.display = "block"; 
         let dNolar = Object.keys(db).filter(k => k !== 'meta' && k !== 'lastUpdated').flatMap(d => Object.keys(db[d]||{})).map(Number);
         document.getElementById('hedefDenemeNo').value = dNolar.length ? Math.max(...dNolar) : 1; 
-        listeleGecmis(); 
-        runAIPrediction(); 
+        listeleGecmis(); runAIPrediction(); 
     }
     else if(aktifSekme === "grafik") { 
         document.getElementById('grafikPanel').style.display = "block"; 
-        const c = document.getElementById('grafikFiltreler');
-        c.innerHTML = '';
-        
-        const genBtn = document.createElement('button');
-        genBtn.className = `pill-btn ${aktifGrafikFiltre==='Genel'?'active':''}`;
-        genBtn.textContent = 'Genel Toplam';
+        const c = document.getElementById('grafikFiltreler'); c.innerHTML = '';
+        const genBtn = document.createElement('button'); genBtn.className = `pill-btn ${aktifGrafikFiltre==='Genel'?'active':''}`; genBtn.textContent = 'Genel Toplam';
         genBtn.addEventListener('click', () => { aktifGrafikFiltre = 'Genel'; gosterSekme(); });
         c.appendChild(genBtn);
 
         Object.keys(müfredat).forEach(d => {
-            const btn = document.createElement('button');
-            btn.className = `pill-btn ${aktifGrafikFiltre===d?'active':''}`;
-            btn.textContent = d;
-            btn.addEventListener('click', () => { aktifGrafikFiltre = d; gosterSekme(); });
-            c.appendChild(btn);
+            const btn = document.createElement('button'); btn.className = `pill-btn ${aktifGrafikFiltre===d?'active':''}`; btn.textContent = d;
+            btn.addEventListener('click', () => { aktifGrafikFiltre = d; gosterSekme(); }); c.appendChild(btn);
         });
-        
         cizGrafik(); 
+    }
+    else if(aktifSekme === "profil") {
+        document.getElementById('profilPanel').style.display = "block";
     }
 }
 
 // ============================================================================
-// 8. VERİ GİRİŞ (DERS) PANELİ 
+// 8. VERİ GİRİŞ (DERS) PANELİ - HATA DÜZELTİLMİŞ STEPPER (+/-) DESTEKLİ
 // ============================================================================
 function renderPanel() {
     const mainContent = document.getElementById('mainContent');
@@ -491,11 +470,11 @@ function renderPanel() {
                 <table>
                     <thead>
                         <tr>
-                            <th style="width:50px;"><input type="checkbox" id="anaCheckbox" checked></th>
+                            <th style="width:40px;"><input type="checkbox" id="anaCheckbox" checked></th>
                             <th>Konu Adı</th>
-                            <th class="text-success">Doğru</th>
-                            <th class="text-danger">Yanlış</th>
-                            <th class="text-info">Boş</th>
+                            <th class="text-success text-center">Doğru</th>
+                            <th class="text-danger text-center">Yanlış</th>
+                            <th class="text-info text-center">Boş</th>
                             <th>Net</th>
                         </tr>
                     </thead>
@@ -503,10 +482,10 @@ function renderPanel() {
                     <tfoot>
                         <tr style="background: rgba(0,0,0,0.05); font-weight:bold;">
                             <td colspan="2" style="text-align:right;">GENEL TOPLAM:</td>
-                            <td id="tdTopD" class="text-success fw-bold">0</td>
-                            <td id="tdTopY" class="text-danger fw-bold">0</td>
-                            <td id="tdTopB" class="text-info fw-bold">0</td>
-                            <td id="tdTopNet" class="text-primary">Net: 0 | İşaretlenmeyen: 0</td>
+                            <td id="tdTopD" class="text-success fw-bold text-center">0</td>
+                            <td id="tdTopY" class="text-danger fw-bold text-center">0</td>
+                            <td id="tdTopB" class="text-info fw-bold text-center">0</td>
+                            <td id="tdTopNet" class="text-primary">Net: 0</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -521,69 +500,74 @@ function renderPanel() {
     document.getElementById('btnPrevDnm').addEventListener('click', () => { aktifDenemeNo = Math.max(1, aktifDenemeNo - 1); aktifAramaTerimi = ""; renderPanel(); });
     document.getElementById('btnNextDnm').addEventListener('click', () => { aktifDenemeNo++; aktifAramaTerimi = ""; renderPanel(); });
     
-    // GÜNCELLENDİ: 0 veya geçersiz numara girişlerini anında engeller
     document.getElementById('denemeNoInput').addEventListener('change', (e) => { 
         let val = parseInt(e.target.value);
         if(isNaN(val) || val < 1) val = 1;
-        
-        aktifDenemeNo = val; 
-        e.target.value = val; 
-        aktifAramaTerimi = ""; 
-        renderPanel(); 
+        aktifDenemeNo = val; e.target.value = val; aktifAramaTerimi = ""; renderPanel(); 
     });
     
     document.getElementById('btnSilDnm').addEventListener('click', () => { document.getElementById('silModal').style.display = 'flex'; });
     
     document.getElementById('dnmTarih').addEventListener('change', (e) => {
-        if(!db.meta) db.meta = {}; 
-        if(!db.meta[aktifDenemeNo]) db.meta[aktifDenemeNo] = {};
-        db.meta[aktifDenemeNo].tarih = e.target.value; 
-        kaydet();
+        if(!db.meta) db.meta = {}; if(!db.meta[aktifDenemeNo]) db.meta[aktifDenemeNo] = {};
+        db.meta[aktifDenemeNo].tarih = e.target.value; kaydet();
     });
     
     document.getElementById('dnmSure').addEventListener('change', (e) => {
-        if(!db.meta) db.meta = {}; 
-        if(!db.meta[aktifDenemeNo]) db.meta[aktifDenemeNo] = {};
-        
+        if(!db.meta) db.meta = {}; if(!db.meta[aktifDenemeNo]) db.meta[aktifDenemeNo] = {};
         let girilenSure = parseInt(e.target.value);
-        if (isNaN(girilenSure) || girilenSure <= 0) {
-            girilenSure = 130;
-            e.target.value = 130;
-        }
-        db.meta[aktifDenemeNo].sure = girilenSure; 
-        kaydet();
+        if (isNaN(girilenSure) || girilenSure <= 0) { girilenSure = 130; e.target.value = 130; }
+        db.meta[aktifDenemeNo].sure = girilenSure; kaydet();
     });
 
     const aramaInput = document.getElementById('konuArama');
-    aramaInput.addEventListener('input', (e) => {
-        aktifAramaTerimi = e.target.value.toLocaleLowerCase('tr-TR');
-        uygulaAramaFiltresi();
-    });
+    aramaInput.addEventListener('input', (e) => { aktifAramaTerimi = e.target.value.toLocaleLowerCase('tr-TR'); uygulaAramaFiltresi(); });
 
     document.getElementById('btnBoslariKapat').addEventListener('click', () => {
         let islemYapildi = false;
         müfredat[aktifDers].forEach(kAd => {
             let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {};
-            let d = parseInt(data.d) || 0;
-            let y = parseInt(data.y) || 0;
-            let b = parseInt(data.b) || 0;
+            let d = parseInt(data.d) || 0; let y = parseInt(data.y) || 0; let b = parseInt(data.b) || 0;
             let s = data.s === undefined ? true : data.s;
-
             if (d === 0 && y === 0 && b === 0 && s === true) {
-                veriNesnesiOlustur(kAd);
-                db[aktifDers][aktifDenemeNo][kAd].s = false;
-                islemYapildi = true;
+                veriNesnesiOlustur(kAd); db[aktifDers][aktifDenemeNo][kAd].s = false; islemYapildi = true;
             }
         });
-
-        if (islemYapildi) {
-            kaydet();
-            renderPanel(); 
-            showToast("İşlem yapılmayan konular analiz dışı bırakıldı.", "success");
-        } else {
-            showToast("Kapatılacak boş konu bulunamadı.", "info");
-        }
+        if (islemYapildi) { kaydet(); renderPanel(); showToast("İşlemsiz konular kapatıldı.", "success"); } 
+        else { showToast("Kapatılacak boş konu bulunamadı.", "info"); }
     });
+
+    // HATASI DÜZELTİLMİŞ STEPPER OLUŞTURUCU
+    const createStepper = (val, disabled, colorClass, tur, kAd, s, tdNet, cb, inpGroupRef) => {
+        const div = document.createElement('div'); div.className = 'stepper-group';
+        const btnMinus = document.createElement('button'); btnMinus.className = 'stepper-btn'; btnMinus.innerHTML = '−';
+        const btnPlus = document.createElement('button'); btnPlus.className = `stepper-btn ${colorClass}`; btnPlus.innerHTML = '+';
+        
+        const inp = document.createElement('input');
+        inp.type = 'number'; inp.min = 0; inp.value = val; inp.disabled = disabled;
+        inp.className = `${colorClass} fw-bold stepper-input`;
+        
+        // ÖNEMLİ DÜZELTME: inpGroupRef.inp yerine doğru anahtarı (d, y, b) kullanıyoruz
+        inpGroupRef[tur] = inp;
+
+        div.append(btnMinus, inp, btnPlus);
+
+        btnMinus.onclick = () => {
+            if(!inp.disabled && parseInt(inp.value) > 0) {
+                inp.value = parseInt(inp.value) - 1; 
+                inp.dispatchEvent(new Event('input'));
+            }
+        };
+
+        btnPlus.onclick = () => {
+            if(!inp.disabled) {
+                inp.value = parseInt(inp.value || 0) + 1; 
+                inp.dispatchEvent(new Event('input'));
+            }
+        };
+
+        return div;
+    };
 
     müfredat[aktifDers].forEach((kAd) => {
         let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd] || {d:0, y:0, b:0, s:true}; 
@@ -596,95 +580,72 @@ function renderPanel() {
         if(!s) tr.className = 'pasif-satir';
 
         const tdCb = document.createElement('td');
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = s;
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = s;
         tdCb.appendChild(cb);
 
-        const tdName = document.createElement('td');
-        tdName.textContent = kAd;
+        const tdName = document.createElement('td'); tdName.textContent = kAd;
 
-        const tdD = document.createElement('td');
-        const inpD = document.createElement('input');
-        inpD.type = 'number'; inpD.min = 0; inpD.value = data.d || 0; inpD.disabled = !s;
-        inpD.className = 'text-success fw-bold';
-        tdD.appendChild(inpD);
-
-        const tdY = document.createElement('td');
-        const inpY = document.createElement('input');
-        inpY.type = 'number'; inpY.min = 0; inpY.value = data.y || 0; inpY.disabled = !s;
-        inpY.className = 'text-danger fw-bold';
-        tdY.appendChild(inpY);
-
-        const tdB = document.createElement('td');
-        const inpB = document.createElement('input');
-        inpB.type = 'number'; inpB.min = 0; inpB.value = data.b || 0; inpB.disabled = !s;
-        inpB.className = 'text-info fw-bold';
-        tdB.appendChild(inpB);
-
-        const tdNet = document.createElement('td');
-        tdNet.className = 'fw-600';
+        const tdNet = document.createElement('td'); tdNet.className = 'fw-600';
         tdNet.textContent = s ? net.toFixed(2) : '-';
         if(s && net < 0) tdNet.style.color = 'var(--alert-color)';
+
+        let refs = { d: null, y: null, b: null };
+
+        const tdD = document.createElement('td'); 
+        tdD.appendChild(createStepper(data.d || 0, !s, 'text-success', 'd', kAd, s, tdNet, cb, refs));
+        
+        const tdY = document.createElement('td'); 
+        tdY.appendChild(createStepper(data.y || 0, !s, 'text-danger', 'y', kAd, s, tdNet, cb, refs));
+        
+        const tdB = document.createElement('td'); 
+        tdB.appendChild(createStepper(data.b || 0, !s, 'text-info', 'b', kAd, s, tdNet, cb, refs));
 
         tr.append(tdCb, tdName, tdD, tdY, tdB, tdNet);
         tbody.appendChild(tr);
 
+        // Satır Aç/Kapa
         cb.addEventListener('change', (e) => {
             let isChecked = e.target.checked;
-            veriNesnesiOlustur(kAd);
-            db[aktifDers][aktifDenemeNo][kAd].s = isChecked;
-            kaydet();
-            
+            veriNesnesiOlustur(kAd); db[aktifDers][aktifDenemeNo][kAd].s = isChecked; kaydet();
             tr.className = isChecked ? '' : 'pasif-satir';
-            inpD.disabled = inpY.disabled = inpB.disabled = !isChecked;
-            guncelleSatirArayuz(kAd, inpD.value, inpY.value, isChecked, tdNet);
+            refs.d.disabled = refs.y.disabled = refs.b.disabled = !isChecked;
+            guncelleSatirArayuz(kAd, refs.d.value, refs.y.value, isChecked, tdNet);
             hesaplaAltToplam();
         });
 
-        const handleInput = (tur, val) => {
+        // Limit Koruyucu ve Hesaplayıcı Dinleyici
+        const handleInput = (tur, val, inpRef) => {
             let deger = Math.max(0, parseInt(val) || 0);
             let maxIzinVerilen = getMaksimumGirebilir(kAd, tur);
             
             if(deger > maxIzinVerilen) {
                 deger = maxIzinVerilen;
-                showToast(`Limit aşılamaz! Değer otomatik ${deger} yapıldı.`, "warning");
-                
-                if(tur === 'd') inpD.value = deger;
-                else if(tur === 'y') inpY.value = deger;
-                else inpB.value = deger;
+                showToast(`Limit aşılamaz! Otomatik ${deger} yapıldı.`, "warning");
+                inpRef.value = deger; // UI'ı hemen düzelt
             }
             
             veriNesnesiOlustur(kAd);
             db[aktifDers][aktifDenemeNo][kAd][tur] = deger;
             kaydet();
-            guncelleSatirArayuz(kAd, inpD.value, inpY.value, cb.checked, tdNet);
+            guncelleSatirArayuz(kAd, refs.d.value, refs.y.value, cb.checked, tdNet);
             hesaplaAltToplam();
         };
 
-        inpD.addEventListener('input', (e) => handleInput('d', e.target.value));
-        inpY.addEventListener('input', (e) => handleInput('y', e.target.value));
-        inpB.addEventListener('input', (e) => handleInput('b', e.target.value));
+        // Event Dinleyicilerini Ekliyoruz
+        refs.d.addEventListener('input', (e) => handleInput('d', e.target.value, refs.d));
+        refs.y.addEventListener('input', (e) => handleInput('y', e.target.value, refs.y));
+        refs.b.addEventListener('input', (e) => handleInput('b', e.target.value, refs.b));
     });
 
     anaCb.checked = hepsiSecili;
     anaCb.addEventListener('change', (e) => {
         let isChecked = e.target.checked;
-        müfredat[aktifDers].forEach(kAd => {
-            veriNesnesiOlustur(kAd);
-            db[aktifDers][aktifDenemeNo][kAd].s = isChecked;
-        });
-        kaydet();
-        renderPanel(); 
+        müfredat[aktifDers].forEach(kAd => { veriNesnesiOlustur(kAd); db[aktifDers][aktifDenemeNo][kAd].s = isChecked; });
+        kaydet(); renderPanel(); 
     });
 
     hesaplaAltToplam(); 
-    
-    if(aktifAramaTerimi !== "") {
-        uygulaAramaFiltresi();
-        aramaInput.focus();
-        aramaInput.setSelectionRange(aktifAramaTerimi.length, aktifAramaTerimi.length);
-    }
+    if(aktifAramaTerimi !== "") { uygulaAramaFiltresi(); aramaInput.focus(); aramaInput.setSelectionRange(aktifAramaTerimi.length, aktifAramaTerimi.length); }
 }
 
 function getMaksimumGirebilir(aktifKonu, tur) {
@@ -693,9 +654,8 @@ function getMaksimumGirebilir(aktifKonu, tur) {
         let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
         if (s !== false) { 
             let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
-            if(k !== aktifKonu) {
-                digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
-            } else {
+            if(k !== aktifKonu) { digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); } 
+            else {
                 let dVal = tur === 'd' ? 0 : Number(kData.d || 0);
                 let yVal = tur === 'y' ? 0 : Number(kData.y || 0);
                 let bVal = tur === 'b' ? 0 : Number(kData.b || 0);
@@ -703,7 +663,6 @@ function getMaksimumGirebilir(aktifKonu, tur) {
             }
         } 
     });
-    
     return Math.max(0, SORU_LIMITLERI[aktifDers] - digerTop);
 }
 
@@ -711,11 +670,7 @@ function uygulaAramaFiltresi() {
     const rows = document.querySelectorAll('#dersTbody tr');
     rows.forEach(row => {
         const konuAdi = row.querySelector('td:nth-child(2)').textContent.toLocaleLowerCase('tr-TR');
-        if(konuAdi.includes(aktifAramaTerimi)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = konuAdi.includes(aktifAramaTerimi) ? '' : 'none';
     });
 }
 
@@ -732,43 +687,16 @@ function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
     tdNet.style.color = (s && net < 0) ? 'var(--alert-color)' : '';
 }
 
-function kontrolSoruLimiti(aktifKonu, tur, yeniDeger) {
-    let digerTop = 0; 
-    müfredat[aktifDers].forEach(k => { 
-        let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
-        if (s !== false) { 
-            let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
-            if(k !== aktifKonu) {
-                digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); 
-            } else {
-                let dVal = tur === 'd' ? yeniDeger : Number(kData.d || 0);
-                let yVal = tur === 'y' ? yeniDeger : Number(kData.y || 0);
-                let bVal = tur === 'b' ? yeniDeger : Number(kData.b || 0);
-                digerTop += (dVal + yVal + bVal);
-            }
-        } 
-    });
-    
-    if(digerTop > SORU_LIMITLERI[aktifDers]) { 
-        return false;
-    }
-    return true;
-}
-
 function hesaplaAltToplam() {
     let topD = 0, topY = 0, topB = 0;
     müfredat[aktifDers].forEach((kAd) => {
         let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd];
-        if(data && data.s !== false) {
-            topD += parseInt(data.d)||0;
-            topY += parseInt(data.y)||0;
-            topB += parseInt(data.b)||0;
-        }
+        if(data && data.s !== false) { topD += parseInt(data.d)||0; topY += parseInt(data.y)||0; topB += parseInt(data.b)||0; }
     });
     let topNet = topD - (topY/4);
-    document.getElementById('tdTopD').textContent = `D: ${topD}`;
-    document.getElementById('tdTopY').textContent = `Y: ${topY}`;
-    document.getElementById('tdTopB').textContent = `B: ${topB}`;
+    document.getElementById('tdTopD').textContent = topD;
+    document.getElementById('tdTopY').textContent = topY;
+    document.getElementById('tdTopB').textContent = topB;
     
     let kalan = SORU_LIMITLERI[aktifDers] - (topD + topY + topB);
     document.getElementById('tdTopNet').textContent = `Net: ${topNet.toFixed(2)} | İşaretlenmeyen: ${kalan}`;
@@ -778,204 +706,122 @@ function hesaplaAltToplam() {
 // 9. AKILLI ANALİZ MOTORU & TRAFİK LAMBASI
 // ============================================================================
 function analizEt() {
-    const dZayif = document.getElementById('analizZayif');
-    const dGelistir = document.getElementById('analizGelistir');
-    const dBasarili = document.getElementById('analizBasarili');
-    const dRadar = document.getElementById('analizPaslananIcerik');
+    const dZayif = document.getElementById('analizZayif'); const dGelistir = document.getElementById('analizGelistir');
+    const dBasarili = document.getElementById('analizBasarili'); const dRadar = document.getElementById('analizPaslananIcerik');
 
     if(!dZayif || !dGelistir || !dBasarili || !dRadar) return;
-
     dZayif.innerHTML = ''; dGelistir.innerHTML = ''; dBasarili.innerHTML = ''; dRadar.innerHTML = '';
     
     let denemeNolar = new Set(); 
-    Object.keys(db).forEach(d => { 
-        if(d !== 'meta' && d !== 'lastUpdated') {
-            Object.keys(db[d]).forEach(no => denemeNolar.add(parseInt(no)));
-        }
-    });
+    Object.keys(db).forEach(d => { if(d !== 'meta' && d !== 'lastUpdated') Object.keys(db[d]).forEach(no => denemeNolar.add(parseInt(no))); });
     
     let sirali = Array.from(denemeNolar).sort((a,b) => a-b); 
     
-    const emptyStateHTML = `
-        <div class="empty-state">
-            <i class="fas fa-folder-open"></i>
-            <p>Hadi ilk denemeni ekleyerek analizlere başlayalım!</p>
-        </div>`;
-
     if(sirali.length === 0) {
-        document.querySelector('.analiz-grid-3').innerHTML = emptyStateHTML;
-        dRadar.innerHTML = '<p class="text-muted">Veri bulunamadı.</p>';
-        return;
+        document.querySelector('.analiz-grid-3').innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>Hadi ilk denemeni ekleyerek analizlere başlayalım!</p></div>`;
+        dRadar.innerHTML = '<p class="text-muted">Veri bulunamadı.</p>'; return;
     }
 
-    if(document.querySelector('.analiz-grid-3 .empty-state')) {
-        gosterSekme(); 
-        return;
-    }
+    if(document.querySelector('.analiz-grid-3 .empty-state')) { gosterSekme(); return; }
 
     let analizEdilecekler = aktifAnalizFiltresi === 0 ? sirali : sirali.slice(-aktifAnalizFiltresi); 
-    let son3 = sirali.slice(-3);
-    let ders = aktifAnalizDersi; 
-    let dC = false; 
+    let son3 = sirali.slice(-3); let ders = aktifAnalizDersi; let dC = false; 
     
     müfredat[ders].forEach(k => {
-        let yS = 0, dS = 0, bS = 0, sS = 0;
-        let dIlk = 0, yIlk = 0, bIlk = 0;
-        let dSon = 0, ySon = 0, bSon = 0;
+        let yS = 0, dS = 0, bS = 0, sS = 0; let dIlk = 0, yIlk = 0, bIlk = 0; let dSon = 0, ySon = 0, bSon = 0;
         let mid = Math.floor(analizEdilecekler.length / 2);
         
         analizEdilecekler.forEach((dNo, i) => {
             if (!db[ders] || !db[ders][dNo]) return; 
             dC = true; 
-            
-            let data = db[ders][dNo][k]; 
-            let s = data === undefined ? true : data.s;
-            
+            let data = db[ders][dNo][k]; let s = data === undefined ? true : data.s;
             if(s) { 
-                sS++; 
-                let d = Number(data?.d || 0);
-                let y = Number(data?.y || 0); 
-                let b = Number(data?.b || 0); 
-                
+                sS++; let d = Number(data?.d || 0); let y = Number(data?.y || 0); let b = Number(data?.b || 0); 
                 bS += b; yS += y; dS += d; 
-                
-                if(i < mid) { dIlk += d; yIlk += y; bIlk += b; } 
-                else { dSon += d; ySon += y; bSon += b; } 
+                if(i < mid) { dIlk += d; yIlk += y; bIlk += b; } else { dSon += d; ySon += y; bSon += b; } 
             }
         });
         
-        let tI = "";
-        let toplamIlk = dIlk + yIlk + bIlk;
-        let toplamSon = dSon + ySon + bSon;
-        
+        let tI = ""; let toplamIlk = dIlk + yIlk + bIlk; let toplamSon = dSon + ySon + bSon;
         if(analizEdilecekler.length >= 2 && toplamIlk > 0 && toplamSon > 0) { 
-            let ortIlk = (dIlk / toplamIlk) * 100;
-            let ortSon = (dSon / toplamSon) * 100;
-            if(ortSon > ortIlk) {
-                tI = " <span class='text-success fw-bold fs-13' title='Yükselişte'><i class='fas fa-arrow-trend-up'></i></span>"; 
-            } else if(ortSon < ortIlk) {
-                tI = " <span class='text-danger fw-bold fs-13' title='Düşüşte'><i class='fas fa-arrow-trend-down'></i></span>"; 
-            }
+            let ortIlk = (dIlk / toplamIlk) * 100; let ortSon = (dSon / toplamSon) * 100;
+            if(ortSon > ortIlk) tI = " <span class='text-success fw-bold fs-13' title='Yükselişte'><i class='fas fa-arrow-trend-up'></i></span>"; 
+            else if(ortSon < ortIlk) tI = " <span class='text-danger fw-bold fs-13' title='Düşüşte'><i class='fas fa-arrow-trend-down'></i></span>"; 
         }
         
         let toplamSorulan = dS + yS + bS;
         if(sS > 0 && toplamSorulan > 0) {
             let isabet = (dS / toplamSorulan) * 100;
-            
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'analiz-item';
-            
-            const textDiv = document.createElement('div');
-            textDiv.innerHTML = `<strong>${k}</strong>${tI} <div class="fs-13 mt-5"><span class="text-muted">${sS} Sınav:</span> <span class="text-success fw-bold">${dS}D</span>, <span class="text-danger fw-bold">${yS}Y</span>, <span class="text-info fw-bold">${bS}B</span></div>`;
-            
-            const percDiv = document.createElement('div');
-            percDiv.className = 'fw-bold fs-18';
-            percDiv.textContent = `%${isabet.toFixed(0)}`;
-            
+            const itemDiv = document.createElement('div'); itemDiv.className = 'analiz-item';
+            const textDiv = document.createElement('div'); textDiv.innerHTML = `<strong>${k}</strong>${tI} <div class="fs-13 mt-5"><span class="text-muted">${sS} Sınav:</span> <span class="text-success fw-bold">${dS}D</span>, <span class="text-danger fw-bold">${yS}Y</span>, <span class="text-info fw-bold">${bS}B</span></div>`;
+            const percDiv = document.createElement('div'); percDiv.className = 'fw-bold fs-18'; percDiv.textContent = `%${isabet.toFixed(0)}`;
             itemDiv.append(textDiv, percDiv);
             
-            if(isabet < 50) dZayif.appendChild(itemDiv);
-            else if(isabet < 85) dGelistir.appendChild(itemDiv);
-            else dBasarili.appendChild(itemDiv);
+            if(isabet < 50) dZayif.appendChild(itemDiv); else if(isabet < 85) dGelistir.appendChild(itemDiv); else dBasarili.appendChild(itemDiv);
         }
 
         if(son3.length >= 3) {
             let hc = true; 
             son3.forEach(dNo => { 
                 if (!db[ders] || !db[ders][dNo]) return; 
-                let data = db[ders][dNo][k]; 
-                let s = data === undefined ? true : data.s; 
-                if(s) hc = false; 
+                let data = db[ders][dNo][k]; let s = data === undefined ? true : data.s; if(s) hc = false; 
             });
-            
             if(hc && dC) { 
-                const rItem = document.createElement('div');
-                rItem.className = 'radar-item';
+                const rItem = document.createElement('div'); rItem.className = 'radar-item';
                 rItem.innerHTML = `<strong>${k}</strong> <span class="fs-13 text-muted block mt-5"><i class="fas fa-exclamation-triangle"></i> Son 3 denemedir atlanıyor. Mutlaka tekrar yap!</span>`;
                 dRadar.appendChild(rItem);
             }
         }
     });
     
-    if(!dC) { 
-        dZayif.innerHTML = dGelistir.innerHTML = dBasarili.innerHTML = `<div class="p-15 text-muted">Bu ders için veri yok.</div>`; 
-    } else {
+    if(!dC) { dZayif.innerHTML = dGelistir.innerHTML = dBasarili.innerHTML = `<div class="p-15 text-muted">Bu ders için veri yok.</div>`; } 
+    else {
         if(dZayif.childElementCount === 0) dZayif.innerHTML = `<div class="p-15 text-success fw-600"><i class="fas fa-check-circle"></i> Zayıf konu yok!</div>`;
         if(dGelistir.childElementCount === 0) dGelistir.innerHTML = `<div class="p-15 text-success fw-600"><i class="fas fa-check-circle"></i> Geliştirilecek konu kalmadı!</div>`;
         if(dBasarili.childElementCount === 0) dBasarili.innerHTML = `<div class="p-15 text-muted"><i class="fas fa-hourglass-half"></i> Henüz %85 başarı yok.</div>`;
     }
 
-    if(dRadar.childElementCount === 0) {
-        dRadar.innerHTML = `<p class="text-success fw-bold p-10 m-0"><i class="fas fa-shield-alt"></i> Harika! Bu derste paslanmış bir konu bulunmuyor.</p>`;
-    }
+    if(dRadar.childElementCount === 0) dRadar.innerHTML = `<p class="text-success fw-bold p-10 m-0"><i class="fas fa-shield-alt"></i> Harika! Bu derste paslanmış bir konu bulunmuyor.</p>`;
 }
 
 // ============================================================================
-// 10. YAPAY ZEKA TAHMİNE DAYALI ANALİZ (Linear Regression)
+// 10. YAPAY ZEKA TAHMİNE DAYALI ANALİZ
 // ============================================================================
 function runAIPrediction() {
-    const aiText = document.getElementById('aiPredictionText');
-    if(!aiText) return;
+    const aiText = document.getElementById('aiPredictionText'); if(!aiText) return;
 
     let denemeler = Object.keys(db).filter(k => k !== 'meta' && k !== 'lastUpdated').flatMap(d => Object.keys(db[d]||{})).map(Number);
     let uniqueDenemeler = [...new Set(denemeler)].sort((a,b) => a-b);
     
-    if(uniqueDenemeler.length < 5) {
-        aiText.textContent = "Yapay zekanın sağlıklı bir tahmin yapabilmesi için en az 5 deneme verisine ihtiyacı var.";
-        return;
-    }
+    if(uniqueDenemeler.length < 5) { aiText.textContent = "Yapay zekanın sağlıklı bir tahmin yapabilmesi için en az 5 deneme verisine ihtiyacı var."; return; }
 
-    let son5 = uniqueDenemeler.slice(-5);
-    let xData = [];
-    let yDataGY = [];
-    let yDataGK = [];
+    let son5 = uniqueDenemeler.slice(-5); let xData = [], yDataGY = [], yDataGK = [];
 
     son5.forEach((dNo, index) => {
-        xData.push(index + 1); 
-        let gyNet = 0, gkNet = 0;
-        
+        xData.push(index + 1); let gyNet = 0, gkNet = 0;
         Object.keys(müfredat).forEach(ders => {
             let dersNet = 0;
             müfredat[ders].forEach(k => {
                 let data = db[ders]?.[dNo]?.[k];
-                if(!data || data.s !== false) {
-                    let d = data?.d || 0;
-                    let y = data?.y || 0;
-                    dersNet += (d - (y / 4));
-                }
+                if(!data || data.s !== false) { let d = data?.d || 0; let y = data?.y || 0; dersNet += (d - (y / 4)); }
             });
-            if(ders === "Türkçe" || ders === "Matematik") gyNet += dersNet;
-            else gkNet += dersNet;
+            if(ders === "Türkçe" || ders === "Matematik") gyNet += dersNet; else gkNet += dersNet;
         });
-        
-        yDataGY.push(gyNet);
-        yDataGK.push(gkNet);
+        yDataGY.push(gyNet); yDataGK.push(gkNet);
     });
 
     const calcLR = (x, y) => {
-        let n = x.length;
-        let sumX = x.reduce((a,b)=>a+b, 0);
-        let sumY = y.reduce((a,b)=>a+b, 0);
-        let sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-        let sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-        let slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-        let intercept = (sumY - slope * sumX) / n;
+        let n = x.length; let sumX = x.reduce((a,b)=>a+b, 0); let sumY = y.reduce((a,b)=>a+b, 0);
+        let sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0); let sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+        let slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX); let intercept = (sumY - slope * sumX) / n;
         return { slope, intercept };
     };
 
-    let lrGY = calcLR(xData, yDataGY);
-    let lrGK = calcLR(xData, yDataGK);
-
+    let lrGY = calcLR(xData, yDataGY); let lrGK = calcLR(xData, yDataGK);
     let nextX = xData.length + 2; 
-    let predGY = (lrGY.slope * nextX + lrGY.intercept).toFixed(2);
-    let predGK = (lrGK.slope * nextX + lrGK.intercept).toFixed(2);
-
-    predGY = Math.min(60, Math.max(0, predGY));
-    predGK = Math.min(60, Math.max(0, predGK));
-
+    let predGY = Math.min(60, Math.max(0, (lrGY.slope * nextX + lrGY.intercept).toFixed(2)));
+    let predGK = Math.min(60, Math.max(0, (lrGK.slope * nextX + lrGK.intercept).toFixed(2)));
     let tavsiye = lrGY.slope <= 0.1 ? "Genel Yetenek ivmen düşük veya durağan, pratikleri artırmalısın." : "Genel Yetenek yükselişin harika, böyle devam et.";
-    
     aiText.innerHTML = `Son 5 denemedeki ivmene göre, KPSS sınavına doğru <strong>Genel Yetenek netin ortalama ${predGY}'e</strong>, <strong>Genel Kültür netin ${predGK}'ye</strong> ulaşacak. ${tavsiye}`;
 }
 
@@ -983,134 +829,70 @@ function runAIPrediction() {
 // 11. GEÇMİŞ DENEMELER VE EXPORT
 // ============================================================================
 function listeleGecmis() {
-    const div = document.getElementById('gecmisIcerik'); 
-    let dNolar = new Set(); 
-    
-    Object.keys(db).forEach(d => { 
-        if(d !== 'meta' && d !== 'lastUpdated') {
-            Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no)));
-        }
-    });
+    const div = document.getElementById('gecmisIcerik'); let dNolar = new Set(); 
+    Object.keys(db).forEach(d => { if(d !== 'meta' && d !== 'lastUpdated') Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no))); });
     
     let sirali = Array.from(dNolar).sort((a,b) => a-b); 
-    if(sirali.length === 0) {
-        div.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-file-excel"></i>
-            <p>Geçmiş deneme kaydı bulunamadı.</p>
-        </div>`;
-        return;
-    }
+    if(sirali.length === 0) { div.innerHTML = `<div class="empty-state"><i class="fas fa-file-excel"></i><p>Geçmiş deneme kaydı bulunamadı.</p></div>`; return; }
 
     let tS = 0, sSayisi = 0;
-    
-    let html = `<table><thead><tr>
-        <th>No</th><th>Tarih</th><th>Süre</th><th>Türkçe</th><th>Matematik</th>
-        <th>Tarih</th><th>Coğrafya</th><th>Vatandaşlık</th><th>GY Net</th><th>GK Net</th><th>Toplam</th>
-        </tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>No</th><th>Tarih</th><th>Süre</th><th>Türkçe</th><th>Matematik</th><th>Tarih</th><th>Coğrafya</th><th>Vatandaşlık</th><th>GY Net</th><th>GK Net</th><th>Toplam</th></tr></thead><tbody>`;
         
     sirali.forEach(dNo => {
         let net = {}; 
         Object.keys(müfredat).forEach(ders => { 
             let dN = 0; 
-            müfredat[ders].forEach(k => { 
-                let data = db[ders]?.[dNo]?.[k]; 
-                if(!data || data.s !== false) { dN += ((data?.d || 0) - ((data?.y || 0) / 4)); }
-            }); 
+            müfredat[ders].forEach(k => { let data = db[ders]?.[dNo]?.[k]; if(!data || data.s !== false) { dN += ((data?.d || 0) - ((data?.y || 0) / 4)); } }); 
             net[ders] = dN; 
         });
         
-        let gy = net["Türkçe"] + net["Matematik"]; 
-        let gk = net["Tarih"] + net["Coğrafya"] + net["Vatandaşlık"]; 
-        let tNet = gy + gk;
-        
+        let gy = net["Türkçe"] + net["Matematik"]; let gk = net["Tarih"] + net["Coğrafya"] + net["Vatandaşlık"]; let tNet = gy + gk;
         let tarih = db.meta?.[dNo]?.tarih ? new Date(db.meta[dNo].tarih).toLocaleDateString('tr-TR') : '-';
         let sure = db.meta?.[dNo]?.sure || 130; 
-        
         if(sure !== '-') { tS += parseInt(sure); sSayisi++; }
         
-        html += `<tr>
-            <td data-label="No"><strong>${dNo}</strong></td>
-            <td data-label="Tarih">${tarih}</td>
-            <td data-label="Süre">${sure} dk</td>
-            <td data-label="Türkçe">${net["Türkçe"].toFixed(2)}</td>
-            <td data-label="Matematik">${net["Matematik"].toFixed(2)}</td>
-            <td data-label="Tarih">${net["Tarih"].toFixed(2)}</td>
-            <td data-label="Coğrafya">${net["Coğrafya"].toFixed(2)}</td>
-            <td data-label="Vatandaşlık">${net["Vatandaşlık"].toFixed(2)}</td>
-            <td data-label="GY Net" class="text-primary fw-bold">${gy.toFixed(2)}</td>
-            <td data-label="GK Net" class="text-primary fw-bold">${gk.toFixed(2)}</td>
-            <td data-label="Toplam" class="fw-bold" style="color:var(--success-color);">${tNet.toFixed(2)}</td>
-        </tr>`;
+        html += `<tr><td data-label="No"><strong>${dNo}</strong></td><td data-label="Tarih">${tarih}</td><td data-label="Süre">${sure} dk</td><td data-label="Türkçe">${net["Türkçe"].toFixed(2)}</td><td data-label="Matematik">${net["Matematik"].toFixed(2)}</td><td data-label="Tarih">${net["Tarih"].toFixed(2)}</td><td data-label="Coğrafya">${net["Coğrafya"].toFixed(2)}</td><td data-label="Vatandaşlık">${net["Vatandaşlık"].toFixed(2)}</td><td data-label="GY Net" class="text-primary fw-bold">${gy.toFixed(2)}</td><td data-label="GK Net" class="text-primary fw-bold">${gk.toFixed(2)}</td><td data-label="Toplam" class="fw-bold" style="color:var(--success-color);">${tNet.toFixed(2)}</td></tr>`;
     });
     
     div.innerHTML = html + `</tbody></table>`;
     
-    let sureYorum = "";
-    const zamanAlani = document.getElementById('zamanAnaliziAlani');
+    let sureYorum = ""; const zamanAlani = document.getElementById('zamanAnaliziAlani');
     if(sSayisi > 0) {
         let ort = Math.round(tS / sSayisi);
-        if(ort <= 130) { sureYorum = `<span class="text-success"><i class="fas fa-check-circle"></i> Sınav süresine (130dk) göre harika ilerliyorsun!</span>`; } 
-        else { sureYorum = `<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Sınav süresini aşıyorsun, hızlanmalısın.</span>`; }
-        zamanAlani.innerHTML = `⏱️ Ortalama Süren: <strong>${ort} Dakika</strong> | ${sureYorum}`;
-        zamanAlani.classList.remove('d-none');
-    } else {
-        zamanAlani.classList.add('d-none');
-    }
+        if(ort <= 130) sureYorum = `<span class="text-success"><i class="fas fa-check-circle"></i> Sınav süresine (130dk) göre harika ilerliyorsun!</span>`; 
+        else sureYorum = `<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Sınav süresini aşıyorsun, hızlanmalısın.</span>`; 
+        zamanAlani.innerHTML = `⏱️ Ortalama Süren: <strong>${ort} Dakika</strong> | ${sureYorum}`; zamanAlani.classList.remove('d-none');
+    } else zamanAlani.classList.add('d-none');
 }
 
 function raporIndirCSV() {
     let csv = "data:text/csv;charset=utf-8,\uFEFFDeneme No,Tarih,Sure (Dk),Turkce,Matematik,Tarih,Cografya,Vatandaslik,GY Net,GK Net,Toplam Net\n";
     let dNolar = new Set(); 
-    
-    Object.keys(db).forEach(d => { 
-        if(d !== 'meta' && d !== 'lastUpdated') { Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no))); }
-    });
+    Object.keys(db).forEach(d => { if(d !== 'meta' && d !== 'lastUpdated') { Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no))); } });
     
     Array.from(dNolar).sort((a,b) => a-b).forEach(dNo => {
-        let tarih = db.meta?.[dNo]?.tarih || "-"; 
-        let sure = db.meta?.[dNo]?.sure || "-"; 
-        let net = {};
-        
+        let tarih = db.meta?.[dNo]?.tarih || "-"; let sure = db.meta?.[dNo]?.sure || "-"; let net = {};
         Object.keys(müfredat).forEach(ders => { 
-            let dN = 0; 
-            müfredat[ders].forEach(k => { 
-                let data = db[ders]?.[dNo]?.[k]; 
-                if(!data || data.s !== false) dN += ((data?.d || 0) - ((data?.y || 0) / 4)); 
-            }); 
+            let dN = 0; müfredat[ders].forEach(k => { let data = db[ders]?.[dNo]?.[k]; if(!data || data.s !== false) dN += ((data?.d || 0) - ((data?.y || 0) / 4)); }); 
             net[ders] = dN; 
         });
-        
         let gy = net["Türkçe"] + net["Matematik"], gk = net["Tarih"] + net["Coğrafya"] + net["Vatandaşlık"];
         csv += `${dNo},${tarih},${sure},${net["Türkçe"].toFixed(2)},${net["Matematik"].toFixed(2)},${net["Tarih"].toFixed(2)},${net["Coğrafya"].toFixed(2)},${net["Vatandaşlık"].toFixed(2)},${gy.toFixed(2)},${gk.toFixed(2)},${(gy+gk).toFixed(2)}\n`;
     });
     
     let link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); 
-    link.setAttribute("download", "KPSS_Deneme_Raporu.csv");
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    link.setAttribute("download", "KPSS_Deneme_Raporu.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 // ============================================================================
 // 12. SVG GRAFİK ÇİZİMİ
 // ============================================================================
 function cizGrafik() {
-    const wrap = document.getElementById('svgChartWrapper'); 
-    let dNolar = new Set(); 
-    
-    Object.keys(db).forEach(d => { 
-        if(d !== 'meta' && d !== 'lastUpdated') { Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no))); }
-    });
+    const wrap = document.getElementById('svgChartWrapper'); let dNolar = new Set(); 
+    Object.keys(db).forEach(d => { if(d !== 'meta' && d !== 'lastUpdated') { Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no))); } });
     
     let sirali = Array.from(dNolar).sort((a,b) => a-b); 
-    
-    if(sirali.length === 0) {
-        wrap.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-chart-line"></i>
-            <p>Grafik çizmek için veri bekleniyor.</p>
-        </div>`;
-        return;
-    }
+    if(sirali.length === 0) { wrap.innerHTML = `<div class="empty-state"><i class="fas fa-chart-line"></i><p>Grafik çizmek için veri bekleniyor.</p></div>`; return; }
     
     let data = sirali.map(dNo => {
         let topN = 0, varMi = false;
@@ -1118,10 +900,7 @@ function cizGrafik() {
             if(ders !== 'meta' && ders !== 'lastUpdated' && (aktifGrafikFiltre === "Genel" || ders === aktifGrafikFiltre)) { 
                 müfredat[ders].forEach(k => { 
                     let data = db[ders]?.[dNo]?.[k]; 
-                    if (!data || data.s !== false) { 
-                        if((data?.d || 0) > 0 || (data?.y || 0) > 0) varMi = true; 
-                        topN += ((data?.d || 0) - ((data?.y || 0) / 4)); 
-                    } 
+                    if (!data || data.s !== false) { if((data?.d || 0) > 0 || (data?.y || 0) > 0) varMi = true; topN += ((data?.d || 0) - ((data?.y || 0) / 4)); } 
                 }); 
             } 
         });
@@ -1130,13 +909,12 @@ function cizGrafik() {
     
     if(data.length === 0) return wrap.innerHTML = '<p class="text-center text-muted">Filtreye uygun veri yok.</p>';
     
-    const w = wrap.clientWidth || 800, h = 300, pad = 40; 
-    let maxN = Math.max(...data.map(d => d.y), 10), minN = Math.min(...data.map(d => d.y), 0);
+    const w = wrap.clientWidth || 800, h = 300, pad = 50; 
+    let toplamNet = data.reduce((sum, pt) => sum + pt.y, 0); let ortalamaNet = data.length > 0 ? (toplamNet / data.length) : 0;
+    let maxN = Math.max(...data.map(d => d.y), 10, ortalamaNet), minN = Math.min(...data.map(d => d.y), 0);
     
     let targetTotal = 0; 
-    if(aktifGrafikFiltre === "Genel" && currentUid) {
-        targetTotal = (parseFloat(localStorage.getItem(`gy_target_${currentUid}`)) || 0) + (parseFloat(localStorage.getItem(`gk_target_${currentUid}`)) || 0);
-    }
+    if(aktifGrafikFiltre === "Genel" && currentUid) { targetTotal = (parseFloat(localStorage.getItem(`gy_target_${currentUid}`)) || 0) + (parseFloat(localStorage.getItem(`gk_target_${currentUid}`)) || 0); }
     if(targetTotal > maxN) maxN = targetTotal; 
     
     let xB = (w - 2 * pad) / Math.max(1, data.length - 1), yB = (h - 2 * pad) / (maxN - minN || 1);
@@ -1153,7 +931,13 @@ function cizGrafik() {
     if(targetTotal > 0 && aktifGrafikFiltre === "Genel") { 
         let tY = h - pad - ((targetTotal - minN) * yB); 
         svg += `<line x1="${pad}" y1="${tY}" x2="${w-pad}" y2="${tY}" stroke="var(--success-color)" stroke-width="2" stroke-dasharray="5,5"></line>`;
-        svg += `<text x="${w-pad+5}" y="${tY+4}" fill="var(--success-color)" font-size="12" font-weight="bold">Hedef</text>`; 
+        svg += `<text x="${w-pad+5}" y="${tY+4}" fill="var(--success-color)" font-size="12" font-weight="bold">Hedef: ${parseFloat(targetTotal.toFixed(2))}</text>`; 
+    }
+
+    if (data.length > 0) {
+        let ortY = h - pad - ((ortalamaNet - minN) * yB);
+        svg += `<line x1="${pad}" y1="${ortY}" x2="${w-pad}" y2="${ortY}" stroke="var(--warning-color)" stroke-width="2" stroke-dasharray="8,6" opacity="0.8"></line>`;
+        svg += `<text x="${w-pad+5}" y="${ortY+4}" fill="var(--warning-color)" font-size="12" font-weight="bold" opacity="0.9">Ort: ${parseFloat(ortalamaNet.toFixed(3))}</text>`;
     }
     
     let pD = "", circs = ""; 
