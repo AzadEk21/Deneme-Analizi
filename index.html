@@ -1,257 +1,259 @@
-<!DOCTYPE html>
-<html lang="tr" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KPSS 2026 | Deneme Analiz</title>
-    
-    <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-    <circle cx='50' cy='50' r='40' fill='none' stroke='%233b82f6' stroke-width='6'/>
-    <circle cx='50' cy='50' r='20' fill='none' stroke='%233b82f6' stroke-width='6'/>
-    <path d='M85 15 L55 45 M75 25 L85 15 L75 5 L85 15' fill='none' stroke='%230f172a' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/>
-</svg>">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-
-    <div id="authScreen" class="auth-container">
+    <!DOCTYPE html>
+    <html lang="tr" data-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>KPSS 2026 | Deneme Analiz</title>
         
-        <div class="auth-box" id="loginBox">
-            <h2 class="text-primary mt-0"><i class="fas fa-user-lock"></i> KPSS PRO'ya Giriş</h2>
-            <p class="text-muted fs-14 mb-20">Sadece kendi verilerini görmek için giriş yapmalısın.</p>
-            
-            <input type="email" id="loginEmail" placeholder="E-posta Adresiniz" class="auth-input">
-            <input type="password" id="loginPassword" placeholder="Şifreniz" class="auth-input">
-            
-            <button id="loginBtn" class="btn-success w-100 mb-10"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
-            
-            <p class="fs-13 mb-15">
-                <a href="#" id="forgotPasswordLink" class="text-muted text-underline">Şifremi Unuttum</a>
-            </p>
-            <p class="fs-14 text-muted m-0">
-                Hesabın yok mu? <a href="#" id="showRegisterBtn" class="text-primary fw-bold text-none">Kayıt Ol</a>
-            </p>
-            <div id="loginMessage" class="mt-15 fs-13"></div>
-        </div>
-
-        <div class="auth-box d-none" id="registerBox">
-            <h2 class="text-primary mt-0"><i class="fas fa-user-plus"></i> Yeni Hesap Oluştur</h2>
-            <p class="text-muted fs-14 mb-20">Bulut senkronizasyonu için hesabını oluştur.</p>
-            
-            <input type="email" id="registerEmail" placeholder="E-posta Adresiniz" class="auth-input">
-            <input type="password" id="registerPassword" placeholder="Şifreniz (En az 6 karakter)" class="auth-input">
-            
-            <button id="registerBtn" class="btn-primary w-100 mb-15"><i class="fas fa-paper-plane"></i> Kayıt Ol</button>
-            
-            <p class="fs-14 text-muted m-0">
-                Zaten hesabın var mı? <a href="#" id="showLoginBtn" class="text-primary fw-bold text-none">Giriş Yap</a>
-            </p>
-            <div id="registerMessage" class="mt-15 fs-13"></div>
-        </div>
-
-        <div class="auth-box d-none" id="resetBox">
-            <h2 class="text-primary mt-0"><i class="fas fa-key"></i> Şifre Sıfırlama</h2>
-            <p class="text-muted fs-14 mb-20">Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.</p>
-            
-            <input type="email" id="resetEmail" placeholder="E-posta Adresiniz" class="auth-input">
-            
-            <button id="resetBtn" class="btn-primary w-100 mb-15"><i class="fas fa-envelope"></i> Bağlantı Gönder</button>
-            
-            <p class="fs-14 text-muted m-0">
-                <a href="#" id="backToLoginBtn" class="text-primary fw-bold text-none"><i class="fas fa-arrow-left"></i> Giriş Ekranına Dön</a>
-            </p>
-            <div id="resetMessage" class="mt-15 fs-13"></div>
-        </div>
-    </div>
-
-    <div id="appScreen" class="container d-none">
+        <meta name="theme-color" content="#0f172a">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <link rel="manifest" href="manifest.json">
         
-        <div class="header-wrapper">
-            <h1><i class="fas fa-graduation-cap"></i> KPSS Hedef & Analiz </h1>
-            <div class="flex-row align-center gap-10">
-                <span id="userEmailDisplay" class="fs-14 text-success fw-bold"></span>
-                <button id="logoutBtn" class="btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
-                <button class="theme-toggle" id="themeBtn"><i class="fas fa-sun"></i> Gündüz Modu</button>
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+        <circle cx='50' cy='50' r='40' fill='none' stroke='%233b82f6' stroke-width='6'/>
+        <circle cx='50' cy='50' r='20' fill='none' stroke='%233b82f6' stroke-width='6'/>
+        <path d='M85 15 L55 45 M75 25 L85 15 L75 5 L85 15' fill='none' stroke='%230f172a' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/>
+    </svg>">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        <div id="authScreen" class="auth-container">
+            <button id="helpBtn" class="btn-info" style="position:fixed; top:20px; right:20px;"><i class="fas fa-question-circle"></i> Kılavuz</button>
+            <div class="auth-box" id="loginBox">
+                <h2 class="text-primary mt-0"><i class="fas fa-user-lock"></i> KPSS PRO'ya Giriş</h2>
+                <p class="text-muted fs-14 mb-20">Sadece kendi verilerini görmek için giriş yapmalısın.</p>
+                
+                <input type="email" id="loginEmail" placeholder="E-posta Adresiniz" class="auth-input">
+                <input type="password" id="loginPassword" placeholder="Şifreniz" class="auth-input">
+                
+                <button id="loginBtn" class="btn-success w-100 mb-10"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
+                
+                <p class="fs-13 mb-15">
+                    <a href="#" id="forgotPasswordLink" class="text-muted text-underline">Şifremi Unuttum</a>
+                </p>
+                <p class="fs-14 text-muted m-0">
+                    Hesabın yok mu? <a href="#" id="showRegisterBtn" class="text-primary fw-bold text-none">Kayıt Ol</a>
+                </p>
+                <div id="loginMessage" class="mt-15 fs-13"></div>
+            </div>
+
+            <div class="auth-box d-none" id="registerBox">
+                <h2 class="text-primary mt-0"><i class="fas fa-user-plus"></i> Yeni Hesap Oluştur</h2>
+                <p class="text-muted fs-14 mb-20">Bulut senkronizasyonu için hesabını oluştur.</p>
+                
+                <input type="email" id="registerEmail" placeholder="E-posta Adresiniz" class="auth-input">
+                <input type="password" id="registerPassword" placeholder="Şifreniz (En az 6 karakter)" class="auth-input">
+                
+                <button id="registerBtn" class="btn-primary w-100 mb-15"><i class="fas fa-paper-plane"></i> Kayıt Ol</button>
+                
+                <p class="fs-14 text-muted m-0">
+                    Zaten hesabın var mı? <a href="#" id="showLoginBtn" class="text-primary fw-bold text-none">Giriş Yap</a>
+                </p>
+                <div id="registerMessage" class="mt-15 fs-13"></div>
+            </div>
+
+            <div class="auth-box d-none" id="resetBox">
+                <h2 class="text-primary mt-0"><i class="fas fa-key"></i> Şifre Sıfırlama</h2>
+                <p class="text-muted fs-14 mb-20">Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.</p>
+                
+                <input type="email" id="resetEmail" placeholder="E-posta Adresiniz" class="auth-input">
+                
+                <button id="resetBtn" class="btn-primary w-100 mb-15"><i class="fas fa-envelope"></i> Bağlantı Gönder</button>
+                
+                <p class="fs-14 text-muted m-0">
+                    <a href="#" id="backToLoginBtn" class="text-primary fw-bold text-none"><i class="fas fa-arrow-left"></i> Giriş Ekranına Dön</a>
+                </p>
+                <div id="resetMessage" class="mt-15 fs-13"></div>
+            </div>
+        </div>
+
+        <div id="appScreen" class="container d-none">
+            
+            <div class="header-wrapper">
+                <h1><i class="fas fa-graduation-cap"></i> KPSS Hedef & Analiz </h1>
+                <div class="flex-row align-center gap-10">
+                    <span id="userEmailDisplay" class="fs-14 text-success fw-bold"></span>
+                    <button id="helpBtn" class="btn-info"><i class="fas fa-question-circle"></i> Kılavuz</button>
+                    <button class="theme-toggle" id="themeBtn"><i class="fas fa-sun"></i> Gündüz Modu</button>
+                    <button id="logoutBtn" class="btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
+                    
+                </div>
+            </div>
+            
+            <div class="nav-buttons" id="dersNav"></div>
+            
+            <div id="mainContent"></div>
+
+            <div class="panel" id="profilPanel">
+                <h2 class="mt-0"><i class="fas fa-user-cog"></i> Profil ve Hesap Ayarları</h2>
+                
+                <div class="analiz-grid mb-25">
+                    <div class="card-box p-20 br-10 border-standard">
+                        <h3 class="mt-0 text-primary"><i class="fas fa-key"></i> Şifre Değiştir</h3>
+                        <p class="fs-13 text-muted">Hesabınızın şifresini güvenli bir şekilde güncelleyin.</p>
+                        <input type="password" id="profilYeniSifre" placeholder="Yeni Şifreniz (En az 6 karakter)" class="auth-input">
+                        <button id="btnSifreGuncelle" class="btn-primary w-100"><i class="fas fa-save"></i> Şifreyi Güncelle</button>
+                    </div>
+                    
+                    <div class="card-box p-20 br-10 border-standard" style="border-color: var(--alert-color);">
+                        <h3 class="mt-0 text-danger"><i class="fas fa-user-slash"></i> Hesabı Sil</h3>
+                        <p class="fs-13 text-muted">Dikkat! Bu işlem geri alınamaz. Buluttaki tüm deneme verileriniz ve kimlik bilgileriniz kalıcı olarak silinir.</p>
+                        <button id="btnHesapSil" class="btn-danger w-100 mt-15"><i class="fas fa-trash-alt"></i> Hesabımı ve Verilerimi Sil</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" id="eksikPanel">
+                <h2 class="flex-between align-center flex-wrap gap-10 mt-0">
+                    <span><i class="fas fa-chart-line"></i> Data Science Analiz Motoru</span>
+                    
+                    <div class="chart-filters m-0" id="analizFiltreler">
+                        <button class="pill-btn active" data-filter="3">Son 3 Deneme</button>
+                        <button class="pill-btn" data-filter="5">Son 5 Deneme</button>
+                        <button class="pill-btn" data-filter="0">Tüm Geçmiş</button>
+                    </div>
+                </h2>
+                <p class="text-muted fs-13 mb-25"><i class="fas fa-info-circle"></i> Gidişat okları seçili zaman aralığının ilk yarısı ile son yarısını kıyaslayarak oluşturulur.</p>
+
+                <div class="nav-buttons mb-25 pb-15 border-bottom" id="analizDersFiltreler">
+                    </div>
+                
+                <div class="analiz-grid-3">
+                    <div class="kutu zayif">
+                        <h3 class="text-danger border-bottom-danger pb-5 mt-0"><i class="fas fa-exclamation-triangle"></i> Zayıf (%50 Altı)</h3>
+                        <div id="analizZayif" class="icerik"></div>
+                    </div>
+                    
+                    <div class="kutu gelistirme">
+                        <h3 class="text-warning border-bottom-warning pb-5 mt-0"><i class="fas fa-sync-alt"></i> Geliştirilmeli (%50-85)</h3>
+                        <div id="analizGelistir" class="icerik"></div>
+                    </div>
+                    
+                    <div class="kutu basarili">
+                        <h3 class="text-success border-bottom-success pb-5 mt-0"><i class="fas fa-trophy"></i> Başarılı (%85+)</h3>
+                        <div id="analizBasarili" class="icerik"></div>
+                    </div>
+                </div>
+
+                <h3 class="text-purple border-bottom-purple pb-10 mt-30"><i class="fas fa-search"></i> Kör Nokta Radarı (Son 3 Deneme)</h3>
+                <div id="analizPaslananIcerik" class="radar-box"></div>
+            </div>
+
+            <div class="panel" id="hedefPanel">
+                <h2 class="mt-0"><i class="fas fa-bullseye"></i> Hedefler & Genel Değerlendirme</h2>
+                
+                <div id="aiPredictionArea" class="ai-prediction-card">
+                    <div class="ai-icon"><i class="fas fa-robot"></i></div>
+                    <div class="ai-content">
+                        <h4 class="mt-0 mb-5 text-purple">Yapay Zeka Hedef Projeksiyonu</h4>
+                        <p id="aiPredictionText" class="m-0 fs-14 text-muted">Gelecek tahmini için verileriniz analiz ediliyor...</p>
+                    </div>
+                </div>
+
+                <div class="analiz-grid mb-25">
+                    <div class="card-box p-20 br-10 border-standard">
+                        <h3 class="mt-0 text-primary"><i class="fas fa-thumbtack"></i> Hedef Belirle</h3>
+                        <div class="hedef-grup"><label>GY Hedefi:</label><input type="number" id="gy-target" step="0.25"></div>
+                        <div class="hedef-grup"><label>GK Hedefi:</label><input type="number" id="gk-target" step="0.25"></div>
+                        <button id="saveTargetsBtn" class="btn-primary w-100"><i class="fas fa-save"></i> Kaydet</button>
+                    </div>
+                    <div class="card-box p-20 br-10 border-standard">
+                        <h3 class="mt-0 text-primary"><i class="fas fa-rocket"></i> Durum Değerlendirmesi</h3>
+                        <div class="hedef-grup"><label>Deneme No:</label><input type="number" id="hedefDenemeNo" class="w-70"></div>
+                        <button id="calcResultsBtn" class="btn-success w-100"><i class="fas fa-chart-pie"></i> Raporu Oluştur</button>
+                    </div>
+                </div>
+                
+                <div id="result-area" class="d-none mb-30"></div>
+
+                <h2 class="border-top pt-20"><i class="fas fa-history"></i> Geçmiş Denemeler Tablosu</h2>
+                <div id="zamanAnaliziAlani" class="zaman-analiz-box mb-15 fs-14 p-10 br-6 d-none"></div>
+                
+                <div class="export-buttons">
+                    <button class="btn-info" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Excel (CSV) İndir</button>
+                    <button class="btn-info" id="printPdfBtn"><i class="fas fa-print"></i> PDF Olarak Kaydet / Yazdır</button>
+                </div>
+                
+                <div class="table-responsive" id="gecmisIcerik"></div>
+            </div>
+
+            <div class="panel" id="grafikPanel">
+                <h2 class="mt-0"><i class="fas fa-chart-area"></i> Net Gelişim Grafiği</h2>
+                <div class="chart-filters" id="grafikFiltreler"></div>
+                <div class="chart-container" id="svgChartWrapper"></div>
             </div>
         </div>
         
-        <div class="nav-buttons" id="dersNav"></div>
+        <div id="toast-container"></div>
         
-        <div id="mainContent"></div>
+        <div class="modal-overlay" id="silModal">
+            <div class="modal-box">
+                <div class="modal-icon fs-48 mb-10 text-danger"><i class="fas fa-trash-alt"></i></div>
+                <div class="fs-18 fw-600 mb-10 text-main">Denemeyi Sil?</div>
+                <div id="silModalMesaj" class="fs-14 text-muted mb-25">Bu denemeye ait tüm veriler silinecektir.</div>
+                <div class="flex-row gap-12">
+                    <button id="cancelDeleteBtn" class="btn-modal-cancel">İptal</button>
+                    <button id="confirmDeleteBtn" class="btn-modal-confirm">Evet, Sil</button>
+                </div>
+            </div>
+        </div>
 
-        <div class="panel" id="profilPanel">
-            <h2 class="mt-0"><i class="fas fa-user-cog"></i> Profil ve Hesap Ayarları</h2>
-            
-            <div class="analiz-grid mb-25">
-                <div class="card-box p-20 br-10 border-standard">
-                    <h3 class="mt-0 text-primary"><i class="fas fa-key"></i> Şifre Değiştir</h3>
-                    <p class="fs-13 text-muted">Hesabınızın şifresini güvenli bir şekilde güncelleyin.</p>
-                    <input type="password" id="profilYeniSifre" placeholder="Yeni Şifreniz (En az 6 karakter)" class="auth-input">
-                    <button id="btnSifreGuncelle" class="btn-primary w-100"><i class="fas fa-save"></i> Şifreyi Güncelle</button>
+        <div class="modal-overlay" id="hesapSilModal">
+            <div class="modal-box">
+                <div class="modal-icon fs-48 mb-10 text-danger"><i class="fas fa-user-slash"></i></div>
+                <div class="fs-18 fw-600 mb-10 text-main">Hesabı Sil?</div>
+                <div class="fs-14 text-muted mb-25">Tüm verileriniz ve hesabınız kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?</div>
+                <div class="flex-row gap-12">
+                    <button id="cancelHesapSilBtn" class="btn-modal-cancel">İptal</button>
+                    <button id="confirmHesapSilBtn" class="btn-modal-confirm">Evet, Sil</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="helpModal">
+            <div class="modal-box" style="max-width: 700px; text-align: left; max-height: 85vh; overflow-y: auto;">
+                <div class="flex-between align-center border-bottom pb-10 mb-15">
+                    <h2 class="m-0 text-info"><i class="fas fa-map-signs"></i> KPSS PRO Kullanım Rehberi</h2>
+                    <button id="closeHelpBtn" class="btn-outline-danger" style="padding: 5px 12px; border:none; font-size:20px; background: transparent;"><i class="fas fa-times"></i></button>
                 </div>
                 
-                <div class="card-box p-20 br-10 border-standard" style="border-color: var(--alert-color);">
-                    <h3 class="mt-0 text-danger"><i class="fas fa-user-slash"></i> Hesabı Sil</h3>
-                    <p class="fs-13 text-muted">Dikkat! Bu işlem geri alınamaz. Buluttaki tüm deneme verileriniz ve kimlik bilgileriniz kalıcı olarak silinir.</p>
-                    <button id="btnHesapSil" class="btn-danger w-100 mt-15"><i class="fas fa-trash-alt"></i> Hesabımı ve Verilerimi Sil</button>
+                <div class="fs-14 text-main" style="line-height: 1.6;">
+                    <p class="text-muted mb-20 mt-0">Sistemin tüm gücünü kullanabilmek için sekmelerin ne işe yaradığını aşağıdan inceleyebilirsiniz:</p>
+
+                    <h4 class="text-primary mt-0 mb-5"><i class="fas fa-book"></i> 1. Dersler Sekmesi (Veri Girişi)</h4>
+                    <p class="mt-0 mb-15 text-muted">Deneme sonuçlarınızı sisteme girdiğiniz ana ekrandır. Mobilde rahat giriş için <strong>+ ve - butonlarını</strong> kullanabilirsiniz.<br>
+                    🔍 <strong>Akıllı Arama:</strong> Sağ üstteki arama çubuğunu kullanarak istediğiniz konuyu anında bulabilirsiniz.<br>
+                    🪄 <strong>İşlemsizleri Kapat:</strong> Hiç değer girmediğiniz konuları analiz dışı bırakmak için bu butonu kullanabilirsiniz.</p>
+                    
+                    <h4 class="text-warning mt-0 mb-5"><i class="fas fa-chart-pie"></i> 2. Analiz & Trend Sekmesi</h4>
+                    <p class="mt-0 mb-15 text-muted"><strong>Ne Görülür?</strong> Sistem girdiğiniz netleri okur ve konularınızı 3 ana kategoriye ayırır:<br>
+                    🔴 <strong>Zayıf (%50 Altı):</strong> İlk müdahale etmeniz gereken, puan kaybının en çok yaşandığı konular.<br>
+                    🟡 <strong>Geliştirilmeli (%50-85):</strong> Temelinizin olduğu ancak pratik eksiğinizin bulunduğu konular.<br>
+                    🟢 <strong>Başarılı (%85+):</strong> Sadece genel tekrarlarla korunması gereken güçlü alanlarınız.<br>
+                    <em>Ayrıca bu sekmedeki "Kör Nokta Radarı", son 3 denemedir atladığınız konuları tespit edip sizi uyarır.</em></p>
+
+                    <h4 class="text-purple mt-0 mb-5"><i class="fas fa-bullseye"></i> 3. Hedef & Geçmiş Sekmesi</h4>
+                    <p class="mt-0 mb-15 text-muted"><strong>Ne Yapılır?</strong> GY ve GK için net hedeflerinizi belirleyip kaydedebilirsiniz.<br>
+                    <strong>Ne Görülür?</strong> <br>
+                    🤖 <strong>Yapay Zeka:</strong> En az 5 deneme girdiğinizde sistem son ivmenizi hesaplar ve sınava kadar netlerinizin hangi banda oturacağını tahmin eder.<br>
+                    📊 <strong>Geçmiş Tablosu:</strong> Tüm denemelerinizin toplu özetini görür, <strong>Excel</strong> veya <strong>PDF</strong> olarak cihazınıza indirebilirsiniz.</p>
+
+                    <h4 class="text-success mt-0 mb-5"><i class="fas fa-chart-area"></i> 4. Grafik Sekmesi</h4>
+                    <p class="mt-0 mb-15 text-muted">Netlerinizin zaman içindeki gelişimini incelersiniz. Sistem girdiğiniz verilere göre hedef çizginizi ve tam ortalamanızı (Örn: Ort: 84.25) otomatik olarak grafik üzerinde gösterir.</p>
+
+                    <div class="p-10 br-6 mt-20" style="background: rgba(14, 165, 233, 0.1); border-left: 4px solid #0ea5e9;">
+                        <h4 class="text-info mt-0 mb-5"><i class="fas fa-wifi"></i> Çevrimdışı Çalışma (PWA)</h4>
+                        <p class="mt-0 m-0 text-muted" style="font-size: 13px;">Bu sistemi telefonunuzun ana ekranına ekleyerek gerçek bir mobil uygulama gibi kullanabilirsiniz. İnternetiniz kopsa bile veriler cihazınıza kaydedilir, internet gelince buluta yedeklenir.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel" id="eksikPanel">
-            <h2 class="flex-between align-center flex-wrap gap-10 mt-0">
-                <span><i class="fas fa-chart-line"></i> Data Science Analiz Motoru</span>
-                
-                <div class="chart-filters m-0" id="analizFiltreler">
-                    <button class="pill-btn active" data-filter="3">Son 3 Deneme</button>
-                    <button class="pill-btn" data-filter="5">Son 5 Deneme</button>
-                    <button class="pill-btn" data-filter="0">Tüm Geçmiş</button>
-                </div>
-            </h2>
-            <p class="text-muted fs-13 mb-25"><i class="fas fa-info-circle"></i> Gidişat okları seçili zaman aralığının ilk yarısı ile son yarısını kıyaslayarak oluşturulur.</p>
-
-            <div class="nav-buttons mb-25 pb-15 border-bottom" id="analizDersFiltreler">
-                </div>
-            
-            <div class="analiz-grid-3">
-                <div class="kutu zayif">
-                    <h3 class="text-danger border-bottom-danger pb-5 mt-0"><i class="fas fa-exclamation-triangle"></i> Zayıf (%50 Altı)</h3>
-                    <div id="analizZayif" class="icerik"></div>
-                </div>
-                
-                <div class="kutu gelistirme">
-                    <h3 class="text-warning border-bottom-warning pb-5 mt-0"><i class="fas fa-sync-alt"></i> Geliştirilmeli (%50-85)</h3>
-                    <div id="analizGelistir" class="icerik"></div>
-                </div>
-                
-                <div class="kutu basarili">
-                    <h3 class="text-success border-bottom-success pb-5 mt-0"><i class="fas fa-trophy"></i> Başarılı (%85+)</h3>
-                    <div id="analizBasarili" class="icerik"></div>
-                </div>
-            </div>
-
-            <h3 class="text-purple border-bottom-purple pb-10 mt-30"><i class="fas fa-search"></i> Kör Nokta Radarı (Son 3 Deneme)</h3>
-            <div id="analizPaslananIcerik" class="radar-box"></div>
-        </div>
-
-        <div class="panel" id="hedefPanel">
-            <h2 class="mt-0"><i class="fas fa-bullseye"></i> Hedefler & Genel Değerlendirme</h2>
-            
-            <div id="aiPredictionArea" class="ai-prediction-card">
-                <div class="ai-icon"><i class="fas fa-robot"></i></div>
-                <div class="ai-content">
-                    <h4 class="mt-0 mb-5 text-purple">Yapay Zeka Hedef Projeksiyonu</h4>
-                    <p id="aiPredictionText" class="m-0 fs-14 text-muted">Gelecek tahmini için verileriniz analiz ediliyor...</p>
-                </div>
-            </div>
-
-            <div class="analiz-grid mb-25">
-                <div class="card-box p-20 br-10 border-standard">
-                    <h3 class="mt-0 text-primary"><i class="fas fa-thumbtack"></i> Hedef Belirle</h3>
-                    <div class="hedef-grup"><label>GY Hedefi:</label><input type="number" id="gy-target" step="0.25"></div>
-                    <div class="hedef-grup"><label>GK Hedefi:</label><input type="number" id="gk-target" step="0.25"></div>
-                    <button id="saveTargetsBtn" class="btn-primary w-100"><i class="fas fa-save"></i> Kaydet</button>
-                </div>
-                <div class="card-box p-20 br-10 border-standard">
-                    <h3 class="mt-0 text-primary"><i class="fas fa-rocket"></i> Durum Değerlendirmesi</h3>
-                    <div class="hedef-grup"><label>Deneme No:</label><input type="number" id="hedefDenemeNo" class="w-70"></div>
-                    <button id="calcResultsBtn" class="btn-success w-100"><i class="fas fa-chart-pie"></i> Raporu Oluştur</button>
-                </div>
-            </div>
-            
-            <div id="result-area" class="d-none mb-30"></div>
-
-            <h2 class="border-top pt-20"><i class="fas fa-history"></i> Geçmiş Denemeler Tablosu</h2>
-            <div id="zamanAnaliziAlani" class="zaman-analiz-box mb-15 fs-14 p-10 br-6 d-none"></div>
-            
-            <div class="export-buttons">
-                <button class="btn-info" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Excel (CSV) İndir</button>
-                <button class="btn-info" id="printPdfBtn"><i class="fas fa-print"></i> PDF Olarak Kaydet / Yazdır</button>
-            </div>
-            
-            <div class="table-responsive" id="gecmisIcerik"></div>
-        </div>
-
-        <div class="panel" id="grafikPanel">
-            <h2 class="mt-0"><i class="fas fa-chart-area"></i> Net Gelişim Grafiği</h2>
-            <div class="chart-filters" id="grafikFiltreler"></div>
-            <div class="chart-container" id="svgChartWrapper"></div>
-        </div>
-    </div>
-    
-    <div id="toast-container"></div>
-    
-    <div class="modal-overlay" id="silModal">
-        <div class="modal-box">
-            <div class="modal-icon fs-48 mb-10 text-danger"><i class="fas fa-trash-alt"></i></div>
-            <div class="fs-18 fw-600 mb-10 text-main">Denemeyi Sil?</div>
-            <div id="silModalMesaj" class="fs-14 text-muted mb-25">Bu denemeye ait tüm veriler silinecektir.</div>
-            <div class="flex-row gap-12">
-                <button id="cancelDeleteBtn" class="btn-modal-cancel">İptal</button>
-                <button id="confirmDeleteBtn" class="btn-modal-confirm">Evet, Sil</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="hesapSilModal">
-        <div class="modal-box">
-            <div class="modal-icon fs-48 mb-10 text-danger"><i class="fas fa-user-slash"></i></div>
-            <div class="fs-18 fw-600 mb-10 text-main">Hesabı Sil?</div>
-            <div class="fs-14 text-muted mb-25">Tüm verileriniz ve hesabınız kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?</div>
-            <div class="flex-row gap-12">
-                <button id="cancelHesapSilBtn" class="btn-modal-cancel">İptal</button>
-                <button id="confirmHesapSilBtn" class="btn-modal-confirm">Evet, Sil</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="helpModal">
-        <div class="modal-box" style="max-width: 700px; text-align: left; max-height: 85vh; overflow-y: auto;">
-            <div class="flex-between align-center border-bottom pb-10 mb-15">
-                <h2 class="m-0 text-info"><i class="fas fa-map-signs"></i> KPSS PRO Kullanım Rehberi</h2>
-                <button id="closeHelpBtn" class="btn-outline-danger" style="padding: 5px 12px; border:none; font-size:20px; background: transparent;"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <div class="fs-14 text-main" style="line-height: 1.6;">
-                <p class="text-muted mb-20 mt-0">Sistemin tüm gücünü kullanabilmek için sekmelerin ne işe yaradığını aşağıdan inceleyebilirsiniz:</p>
-
-                <h4 class="text-primary mt-0 mb-5"><i class="fas fa-book"></i> 1. Dersler Sekmesi (Veri Girişi)</h4>
-                <p class="mt-0 mb-15 text-muted">Deneme sonuçlarınızı sisteme girdiğiniz ana ekrandır. Mobilde rahat giriş için <strong>+ ve - butonlarını</strong> kullanabilirsiniz.<br>
-                🔍 <strong>Akıllı Arama:</strong> Sağ üstteki arama çubuğunu kullanarak istediğiniz konuyu anında bulabilirsiniz.<br>
-                🪄 <strong>İşlemsizleri Kapat:</strong> Hiç değer girmediğiniz konuları analiz dışı bırakmak için bu butonu kullanabilirsiniz.</p>
-                
-                <h4 class="text-warning mt-0 mb-5"><i class="fas fa-chart-pie"></i> 2. Analiz & Trend Sekmesi</h4>
-                <p class="mt-0 mb-15 text-muted"><strong>Ne Görülür?</strong> Sistem girdiğiniz netleri okur ve konularınızı 3 ana kategoriye ayırır:<br>
-                🔴 <strong>Zayıf (%50 Altı):</strong> İlk müdahale etmeniz gereken, puan kaybının en çok yaşandığı konular.<br>
-                🟡 <strong>Geliştirilmeli (%50-85):</strong> Temelinizin olduğu ancak pratik eksiğinizin bulunduğu konular.<br>
-                🟢 <strong>Başarılı (%85+):</strong> Sadece genel tekrarlarla korunması gereken güçlü alanlarınız.<br>
-                <em>Ayrıca bu sekmedeki "Kör Nokta Radarı", son 3 denemedir atladığınız konuları tespit edip sizi uyarır.</em></p>
-
-                <h4 class="text-purple mt-0 mb-5"><i class="fas fa-bullseye"></i> 3. Hedef & Geçmiş Sekmesi</h4>
-                <p class="mt-0 mb-15 text-muted"><strong>Ne Yapılır?</strong> GY ve GK için net hedeflerinizi belirleyip kaydedebilirsiniz.<br>
-                <strong>Ne Görülür?</strong> <br>
-                🤖 <strong>Yapay Zeka:</strong> En az 5 deneme girdiğinizde sistem son ivmenizi hesaplar ve sınava kadar netlerinizin hangi banda oturacağını tahmin eder.<br>
-                📊 <strong>Geçmiş Tablosu:</strong> Tüm denemelerinizin toplu özetini görür, <strong>Excel</strong> veya <strong>PDF</strong> olarak cihazınıza indirebilirsiniz.</p>
-
-                <h4 class="text-success mt-0 mb-5"><i class="fas fa-chart-area"></i> 4. Grafik Sekmesi</h4>
-                <p class="mt-0 mb-15 text-muted">Netlerinizin zaman içindeki gelişimini incelersiniz. Sistem girdiğiniz verilere göre hedef çizginizi ve tam ortalamanızı (Örn: Ort: 84.25) otomatik olarak grafik üzerinde gösterir.</p>
-
-                <div class="p-10 br-6 mt-20" style="background: rgba(14, 165, 233, 0.1); border-left: 4px solid #0ea5e9;">
-                    <h4 class="text-info mt-0 mb-5"><i class="fas fa-wifi"></i> Çevrimdışı Çalışma (PWA)</h4>
-                    <p class="mt-0 m-0 text-muted" style="font-size: 13px;">Bu sistemi telefonunuzun ana ekranına ekleyerek gerçek bir mobil uygulama gibi kullanabilirsiniz. İnternetiniz kopsa bile veriler cihazınıza kaydedilir, internet gelince buluta yedeklenir.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/db.js"></script>
-    <script type="module" src="js/app.js"></script>
-</body>
-</html>
+        <script type="module" src="js/auth.js"></script>
+        <script type="module" src="js/db.js"></script>
+        <script type="module" src="js/app.js"></script>
+    </body>
+    </html>
