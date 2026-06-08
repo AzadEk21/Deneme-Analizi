@@ -11,18 +11,16 @@
     --border-color: #e2e8f0; 
     --input-bg: #f8fafc;
     
-    /* Durum Renkleri (Trafik Lambası) */
-    --alert-color: #ef4444;    /* Zayıf / Hata */
-    --warning-color: #eab308;  /* Geliştirilmeli / Orta */
-    --success-color: #22c55e;  /* Başarılı / İyi */
-    --purple-color: #8b5cf6;   /* Yapay Zeka / Hedef */
+    --alert-color: #ef4444;    
+    --warning-color: #eab308;  
+    --success-color: #22c55e;  
+    --purple-color: #8b5cf6;   
     
     --font-main: 'Segoe UI', Roboto, sans-serif;
     --target-bg: #eff6ff; 
     --target-border: #bfdbfe;
 }
 
-/* Gece Modu Değişkenleri */
 [data-theme="dark"] {
     --primary-color: #60a5fa; 
     --primary-hover: #3b82f6;
@@ -117,7 +115,7 @@
 }
 
 /* ==========================================================================
-   3. GENEL GÖRÜNÜM (BODY & CONTAINER)
+   3. GENEL GÖRÜNÜM VE PWA OPTİMİZASYONLARI
    ========================================================================== */
 body { 
     background-color: var(--bg-color); 
@@ -127,6 +125,9 @@ body {
     padding: 20px; 
     line-height: 1.6; 
     transition: background-color 0.3s, color 0.3s; 
+    /* Mobil uygulamalarda yenilemeyi (pull-to-refresh) engeller */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .container { 
@@ -213,7 +214,6 @@ button.active {
     border-color: var(--primary-color); 
 }
 
-/* Özel Menü Butonları */
 .btn-analiz { color: var(--warning-color); border-color: var(--warning-color); }
 .btn-analiz:hover, .btn-analiz.active { background-color: var(--warning-color); color: white; border-color: var(--warning-color); }
 
@@ -223,7 +223,6 @@ button.active {
 .btn-grafik { color: var(--success-color); border-color: var(--success-color); }
 .btn-grafik:hover, .btn-grafik.active { background-color: var(--success-color); color: white; border-color: var(--success-color); }
 
-/* Renkli Aksiyon Butonları */
 .btn-outline-danger { background-color: transparent; color: var(--alert-color); border-color: var(--alert-color); padding: 6px 12px; }
 .btn-outline-danger:hover { background-color: var(--alert-color); color: white; }
 
@@ -242,7 +241,6 @@ button.active {
 .btn-info { background-color: #0ea5e9; color: white; border-color: #0ea5e9; }
 .btn-info:hover { background-color: #0284c7; border-color: #0284c7; }
 
-/* Küçük Hap (Pill) Butonlar */
 .pill-btn { 
     border-radius: 20px; 
     padding: 6px 14px; 
@@ -313,6 +311,8 @@ button.active {
 input[type="number"], 
 input[type="date"], 
 input[type="text"],
+input[type="password"],
+input[type="email"],
 .auth-input { 
     background-color: var(--input-bg); 
     color: var(--text-main); 
@@ -329,6 +329,8 @@ input[type="number"] { width: 60px; text-align: center; }
 input[type="number"]:focus:not(:disabled), 
 input[type="date"]:focus, 
 input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
 .auth-input:focus { 
     border-color: var(--primary-color); 
     box-shadow: 0 0 0 2px rgba(59,130,246,0.2); 
@@ -348,10 +350,88 @@ input[type="checkbox"] {
 }
 
 /* ==========================================================================
-   6. TABLOLAR VE MOBİL KART GÖRÜNÜMÜ (UI/UX)
+   YENİ: MOBİL UYUMLU STEPPER (+ / - BUTONLARI)
    ========================================================================== */
-.table-responsive { width: 100%; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 550px; }
+.stepper-group {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--input-bg);
+    overflow: hidden;
+    height: 32px;
+}
+
+.stepper-btn {
+    background-color: rgba(0,0,0,0.03);
+    border: none;
+    width: 28px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--text-main);
+    padding: 0;
+    transition: background 0.2s;
+    border-radius: 0; /* Override default button radius */
+}
+
+.stepper-btn:hover:not(:disabled) {
+    background-color: rgba(0,0,0,0.1);
+}
+
+.stepper-btn:active:not(:disabled) {
+    background-color: rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .stepper-btn {
+    background-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .stepper-btn:hover:not(:disabled) {
+    background-color: rgba(255,255,255,0.15);
+}
+
+.stepper-input {
+    width: 32px !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    text-align: center;
+    box-shadow: none !important;
+    /* Mobilde native okları gizlemek için */
+    -moz-appearance: textfield;
+    appearance: textfield; /* <-- BU SATIRI EKLEDİK */
+}
+
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* ==========================================================================
+   6. TABLOLAR VE STICKY HEADER (SABİT BAŞLIKLAR)
+   ========================================================================== */
+/* YENİ: Yüksekliği sınırla ve Sticky Header'ı aktif et */
+.table-responsive { 
+    width: 100%; 
+    overflow-x: auto; 
+    max-height: 60vh; /* Ekrana göre otomatik kaydırma çubuğu */
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    min-width: 550px; 
+}
 
 th, td { 
     padding: 10px 12px; 
@@ -362,14 +442,24 @@ th, td {
 
 td:nth-child(2), th:nth-child(2) { text-align: left; }
 
-th { 
-    background-color: rgba(0,0,0,0.03); 
+/* YENİ: Sticky Header Özellikleri */
+thead th { 
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--bg-color); /* Şeffaf olmamalı ki alttan geçenler görünmesin */
     color: var(--text-muted); 
     font-size: 13px; 
     text-transform: uppercase; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Yapışkanlık hissini artırmak için hafif gölge */
 }
 
-[data-theme="dark"] th { background-color: rgba(0,0,0,0.2); }
+/* Gece modunda yapışkan başlık rengi */
+[data-theme="dark"] thead th { 
+    background-color: #1e293b; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
 [data-theme="dark"] tr:hover:not(.pasif-satir) td { background-color: rgba(255,255,255,0.02); }
 [data-theme="light"] tr:hover:not(.pasif-satir) td { background-color: #f8fafc; }
 
@@ -702,9 +792,21 @@ svg {
     .chart-filters, 
     button, 
     #authScreen, 
-    .ai-prediction-card { 
+    .ai-prediction-card,
+    #btnBoslariKapat,
+    #konuArama { 
         display: none !important; 
     }
+    
+    /* PDF'te Input kenarlıklarını kaldırıp metin gibi göster */
+    input[type="number"], .stepper-btn {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-weight: bold;
+    }
+
+    .stepper-btn { display: none !important; }
     
     .panel { 
         box-shadow: none !important; 
