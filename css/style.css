@@ -798,192 +798,121 @@ svg {
 }
 
 /* ==========================================================================
-   15. MÜKEMMEL MOBİL GÖRÜNÜM (NOTION TARZI KART TASARIMI)
+   15. MÜKEMMEL MOBİL GÖRÜNÜM (UYUMLU VE KOMPAKT KART TASARIMI)
    ========================================================================== */
 @media (max-width: 768px) {
     /* 1. Üst Kısım (Header) Düzenlemesi */
-    .header-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 15px;
-    }
-    .header-wrapper h1 {
-        font-size: 20px;
-        margin-bottom: 10px;
-    }
-    .header-wrapper .flex-row {
-        width: 100%;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    #userEmailDisplay {
-        width: 100%; /* E-postayı tek satıra al ve taşırmaması için */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: 5px;
-        font-size: 12px;
-    }
+    .header-wrapper { flex-direction: column; align-items: flex-start; padding: 15px; }
+    .header-wrapper h1 { font-size: 20px; margin-bottom: 10px; }
+    .header-wrapper .flex-row { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
+    #userEmailDisplay { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; font-size: 13px; }
 
     /* 2. Menü Butonları (Yatay Kaydırılabilir Scroll) */
-    .nav-buttons {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* iOS için yumuşak kaydırma */
-        justify-content: flex-start;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-        scrollbar-width: none; /* Firefox için scrollbar gizleme */
-    }
-    .nav-buttons::-webkit-scrollbar {
-        display: none; /* Chrome/Safari için scrollbar gizleme */
-    }
-    .nav-buttons button {
-        flex: 0 0 auto; /* Butonların sıkışmasını engeller */
-        white-space: nowrap;
-    }
+    .nav-buttons { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
+    .nav-buttons::-webkit-scrollbar { display: none; }
+    .nav-buttons button { flex: 0 0 auto; white-space: nowrap; }
 
     /* 3. Kontrol Paneli (Tarih, Süre, Arama - Alt Alta) */
-    .meta-inputs {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    .meta-inputs .flex-row {
-        justify-content: space-between;
-        width: 100%;
-    }
-    .meta-inputs .ml-auto {
-        margin-left: 0 !important;
-        flex-direction: column;
-        width: 100%;
-        gap: 10px;
-    }
-    #konuArama, #btnBoslariKapat {
-        width: 100% !important; /* Tam ekran genişliğine yay */
-    }
+    .meta-inputs { flex-direction: column; align-items: stretch; gap: 10px; }
+    .meta-inputs .flex-row { justify-content: space-between; width: 100%; }
+    .meta-inputs .ml-auto { margin-left: 0 !important; flex-direction: column; width: 100%; gap: 10px; }
+    #konuArama, #btnBoslariKapat { width: 100% !important; }
 
-    /* 4. Tablodan "Kart" (Card UI) Görünümüne Geçiş */
-    .table-responsive {
-        border: none;
-        max-height: none; /* Mobilde kendi kendine kaysın */
-        overflow: visible;
-    }
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
-    thead {
-        display: none; /* Mobilde başlıkları gizle */
-    }
+    /* 4. Tabloyı Karta Dönüştür (Daha Kompakt ve İnce) */
+    .table-responsive { border: none; max-height: none; overflow: visible; }
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
     
-    /* Her satırı (konuyu) bir karta dönüştür */
     #dersTbody tr {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
-        border-radius: 10px;
-        margin-bottom: 15px;
-        padding: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        border-radius: 8px; 
+        margin-bottom: 10px; 
+        padding: 10px; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         position: relative;
     }
 
-    /* Pasif satır (kapatılmış konu) stili */
-    #dersTbody tr.pasif-satir {
-        opacity: 0.6;
-        background: rgba(0,0,0,0.02);
-    }
+    #dersTbody tr.pasif-satir { opacity: 0.5; background: var(--bg-color); }
     
-    /* 1. Hücre: Checkbox */
-    #dersTbody td:nth-child(1) {
-        position: absolute;
-        top: 15px;
-        left: 10px;
-        border: none;
-        padding: 0;
-    }
+    #dersTbody td:nth-child(1) { position: absolute; top: 10px; left: 10px; border: none; padding: 0; }
     
-    /* 2. Hücre: Konu Adı */
     #dersTbody td:nth-child(2) {
         border: none;
-        padding: 0 0 10px 30px; /* Checkbox için soldan boşluk bırak */
-        font-weight: bold;
-        font-size: 14px;
+        padding: 0 0 8px 28px; 
+        font-weight: 600;
+        font-size: 13px; 
         color: var(--text-main);
-        white-space: normal; /* Uzun metinlerin alt satıra inmesine izin ver */
         text-align: left;
+        border-bottom: 1px solid var(--border-color); 
+        margin-bottom: 5px;
     }
 
-    /* 3, 4, 5. Hücreler: Doğru, Yanlış, Boş Butonları (Yan Yana Diz) */
-    #dersTbody td:nth-child(3),
-    #dersTbody td:nth-child(4),
-    #dersTbody td:nth-child(5) {
-        border: none;
-        padding: 5px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    #dersTbody td:nth-child(3), #dersTbody td:nth-child(4), #dersTbody td:nth-child(5) {
+        border: none; padding: 4px 0; display: flex; justify-content: space-between; align-items: center;
     }
 
-    /* Stepper'ların yanına "Doğru:", "Yanlış:" etiketleri ekle */
+    /* Stepper'ları Küçült (Ekrana tam sığması için) */
+    .stepper-group { height: 28px; }
+    .stepper-btn { width: 26px; font-size: 16px; }
+    .stepper-input { width: 28px !important; font-size: 13px !important; }
+
     #dersTbody td:nth-child(3)::before { content: "Doğru"; font-size: 12px; font-weight: bold; color: var(--success-color); }
     #dersTbody td:nth-child(4)::before { content: "Yanlış"; font-size: 12px; font-weight: bold; color: var(--alert-color); }
     #dersTbody td:nth-child(5)::before { content: "Boş"; font-size: 12px; font-weight: bold; color: #0ea5e9; }
 
-    /* 6. Hücre: Net Değeri */
+    /* Net Değeri - Gri Kutu İçinde Belirgin */
     #dersTbody td:nth-child(6) {
         border: none;
-        border-top: 1px dashed var(--border-color);
+        background: var(--input-bg);
+        border-radius: 6px;
         margin-top: 5px;
-        padding-top: 10px;
+        padding: 8px 10px;
         display: flex;
         justify-content: space-between;
-        font-size: 14px;
-        background: transparent;
-    }
-    #dersTbody td:nth-child(6)::before {
-        content: "NET:";
+        font-size: 13px;
         font-weight: bold;
-        color: var(--text-muted);
     }
+    #dersTbody td:nth-child(6)::before { content: "Net:"; color: var(--text-muted); }
 
-    /* Tfoot (Genel Toplam) Düzenlemesi */
+    /* 5. Tfoot (Genel Toplam) Düzenlemesi - UYUMLU RENK */
     tfoot tr {
-        background: var(--primary-color) !important;
-        color: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin-top: 20px;
+        background: var(--card-bg) !important;
+        color: var(--text-main) !important;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     tfoot td {
         border: none;
-        color: white !important;
+        color: var(--text-main) !important;
         text-align: left !important;
-        padding: 5px 0;
+        padding: 6px 0;
         display: flex;
         justify-content: space-between;
+        font-size: 13px;
+        border-bottom: 1px solid var(--border-color);
     }
-    tfoot td:nth-child(1) { display: none; } /* GENEL TOPLAM yazısını gizle */
-    tfoot td:nth-child(2)::before { content: "Toplam Doğru:"; }
-    tfoot td:nth-child(3)::before { content: "Toplam Yanlış:"; }
-    tfoot td:nth-child(4)::before { content: "Toplam Boş:"; }
+    tfoot td:nth-child(1) { display: none; }
+    tfoot td:nth-child(2)::before { content: "Toplam Doğru:"; font-weight: bold; color: var(--success-color); }
+    tfoot td:nth-child(3)::before { content: "Toplam Yanlış:"; font-weight: bold; color: var(--alert-color); }
+    tfoot td:nth-child(4)::before { content: "Toplam Boş:"; font-weight: bold; color: #0ea5e9; }
     
-    /* Net ve Kalan Soru Kısmı */
     tfoot td:nth-child(5) {
-        border-top: 1px solid rgba(255,255,255,0.2);
-        margin-top: 10px;
-        padding-top: 10px;
+        border-bottom: none;
+        margin-top: 5px;
+        padding-top: 8px;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         gap: 5px;
-        font-size: 16px;
+        font-size: 15px;
+        font-weight: bold;
+        color: var(--primary-color) !important;
+        background: var(--target-bg);
+        border-radius: 6px;
     }
 
-    /* Geçmiş Tablosunu Karta Dönüştürme (Zaten vardı ama pekiştirdik) */
-    #gecmisIcerik tr {
-        margin-bottom: 15px;
-        border-radius: 10px;
-        padding: 15px;
-    }
+    #gecmisIcerik tr { margin-bottom: 15px; border-radius: 10px; padding: 15px; }
 }
