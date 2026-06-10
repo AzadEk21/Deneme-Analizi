@@ -405,7 +405,7 @@ input[type="checkbox"] {
     box-shadow: none !important;
     /* Mobilde native okları gizlemek için */
     -moz-appearance: textfield;
-    appearance: textfield; /* <-- BU SATIRI EKLEDİK */
+    appearance: textfield;
 }
 
 .stepper-input::-webkit-outer-spin-button,
@@ -465,54 +465,6 @@ thead th {
 
 .pasif-satir td { opacity: 0.4; }
 .pasif-satir td:nth-child(2) { text-decoration: line-through; color: var(--text-muted); }
-
-/* Mobilde Geçmiş Tablosunu Karta Dönüştüren CSS */
-@media (max-width: 768px) {
-    #gecmisIcerik table, 
-    #gecmisIcerik thead, 
-    #gecmisIcerik tbody, 
-    #gecmisIcerik th, 
-    #gecmisIcerik td, 
-    #gecmisIcerik tr { 
-        display: block; 
-    }
-    
-    #gecmisIcerik thead tr { display: none; }
-    
-    #gecmisIcerik tr { 
-        margin-bottom: 15px; 
-        border: 1px solid var(--border-color); 
-        border-radius: 8px; 
-        padding: 10px; 
-        background: var(--card-bg); 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
-    }
-    
-    #gecmisIcerik td { 
-        display: flex; 
-        justify-content: space-between; 
-        text-align: right; 
-        border-bottom: 1px solid rgba(0,0,0,0.05); 
-        padding: 8px 5px; 
-        border-top: none; 
-        border-left: none; 
-        border-right: none;
-    }
-    
-    #gecmisIcerik td::before { 
-        content: attr(data-label); 
-        font-weight: bold; 
-        text-align: left; 
-        color: var(--text-muted); 
-    }
-    
-    #gecmisIcerik td:last-child { 
-        border-bottom: 0; 
-        background-color: rgba(59, 130, 246, 0.05); 
-        border-radius: 4px; 
-        margin-top: 5px; 
-    }
-}
 
 .empty-state { 
     display: flex; 
@@ -798,7 +750,6 @@ svg {
         display: none !important; 
     }
     
-    /* PDF'te Input kenarlıklarını kaldırıp metin gibi göster */
     input[type="number"], .stepper-btn {
         border: none !important;
         background: transparent !important;
@@ -820,8 +771,9 @@ svg {
         print-color-adjust: exact !important; 
     }
 }
+
 /* ==========================================================================
-   14. BUTON BOYUTU VE HİZALAMA EŞİTLEME (SON DÜZENLEME)
+   14. BUTON BOYUTU VE HİZALAMA EŞİTLEME
    ========================================================================== */
 #helpBtn, #logoutBtn, .theme-toggle {
     height: 38px !important;
@@ -832,4 +784,206 @@ svg {
     font-size: 14px !important;
     font-weight: 500 !important;
     line-height: 1 !important;
+}
+
+.theme-toggle {
+    min-width: 110px;
+}
+
+#helpBtn {
+    position: relative !important;
+    z-index: 1000 !important; 
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+/* ==========================================================================
+   15. MÜKEMMEL MOBİL GÖRÜNÜM (NOTION TARZI KART TASARIMI)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 1. Üst Kısım (Header) Düzenlemesi */
+    .header-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+    }
+    .header-wrapper h1 {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+    .header-wrapper .flex-row {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    #userEmailDisplay {
+        width: 100%; /* E-postayı tek satıra al ve taşırmaması için */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 5px;
+        font-size: 12px;
+    }
+
+    /* 2. Menü Butonları (Yatay Kaydırılabilir Scroll) */
+    .nav-buttons {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* iOS için yumuşak kaydırma */
+        justify-content: flex-start;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        scrollbar-width: none; /* Firefox için scrollbar gizleme */
+    }
+    .nav-buttons::-webkit-scrollbar {
+        display: none; /* Chrome/Safari için scrollbar gizleme */
+    }
+    .nav-buttons button {
+        flex: 0 0 auto; /* Butonların sıkışmasını engeller */
+        white-space: nowrap;
+    }
+
+    /* 3. Kontrol Paneli (Tarih, Süre, Arama - Alt Alta) */
+    .meta-inputs {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .meta-inputs .flex-row {
+        justify-content: space-between;
+        width: 100%;
+    }
+    .meta-inputs .ml-auto {
+        margin-left: 0 !important;
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+    #konuArama, #btnBoslariKapat {
+        width: 100% !important; /* Tam ekran genişliğine yay */
+    }
+
+    /* 4. Tablodan "Kart" (Card UI) Görünümüne Geçiş */
+    .table-responsive {
+        border: none;
+        max-height: none; /* Mobilde kendi kendine kaysın */
+        overflow: visible;
+    }
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    thead {
+        display: none; /* Mobilde başlıkları gizle */
+    }
+    
+    /* Her satırı (konuyu) bir karta dönüştür */
+    #dersTbody tr {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        margin-bottom: 15px;
+        padding: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        position: relative;
+    }
+
+    /* Pasif satır (kapatılmış konu) stili */
+    #dersTbody tr.pasif-satir {
+        opacity: 0.6;
+        background: rgba(0,0,0,0.02);
+    }
+    
+    /* 1. Hücre: Checkbox */
+    #dersTbody td:nth-child(1) {
+        position: absolute;
+        top: 15px;
+        left: 10px;
+        border: none;
+        padding: 0;
+    }
+    
+    /* 2. Hücre: Konu Adı */
+    #dersTbody td:nth-child(2) {
+        border: none;
+        padding: 0 0 10px 30px; /* Checkbox için soldan boşluk bırak */
+        font-weight: bold;
+        font-size: 14px;
+        color: var(--text-main);
+        white-space: normal; /* Uzun metinlerin alt satıra inmesine izin ver */
+        text-align: left;
+    }
+
+    /* 3, 4, 5. Hücreler: Doğru, Yanlış, Boş Butonları (Yan Yana Diz) */
+    #dersTbody td:nth-child(3),
+    #dersTbody td:nth-child(4),
+    #dersTbody td:nth-child(5) {
+        border: none;
+        padding: 5px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Stepper'ların yanına "Doğru:", "Yanlış:" etiketleri ekle */
+    #dersTbody td:nth-child(3)::before { content: "Doğru"; font-size: 12px; font-weight: bold; color: var(--success-color); }
+    #dersTbody td:nth-child(4)::before { content: "Yanlış"; font-size: 12px; font-weight: bold; color: var(--alert-color); }
+    #dersTbody td:nth-child(5)::before { content: "Boş"; font-size: 12px; font-weight: bold; color: #0ea5e9; }
+
+    /* 6. Hücre: Net Değeri */
+    #dersTbody td:nth-child(6) {
+        border: none;
+        border-top: 1px dashed var(--border-color);
+        margin-top: 5px;
+        padding-top: 10px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        background: transparent;
+    }
+    #dersTbody td:nth-child(6)::before {
+        content: "NET:";
+        font-weight: bold;
+        color: var(--text-muted);
+    }
+
+    /* Tfoot (Genel Toplam) Düzenlemesi */
+    tfoot tr {
+        background: var(--primary-color) !important;
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    tfoot td {
+        border: none;
+        color: white !important;
+        text-align: left !important;
+        padding: 5px 0;
+        display: flex;
+        justify-content: space-between;
+    }
+    tfoot td:nth-child(1) { display: none; } /* GENEL TOPLAM yazısını gizle */
+    tfoot td:nth-child(2)::before { content: "Toplam Doğru:"; }
+    tfoot td:nth-child(3)::before { content: "Toplam Yanlış:"; }
+    tfoot td:nth-child(4)::before { content: "Toplam Boş:"; }
+    
+    /* Net ve Kalan Soru Kısmı */
+    tfoot td:nth-child(5) {
+        border-top: 1px solid rgba(255,255,255,0.2);
+        margin-top: 10px;
+        padding-top: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        font-size: 16px;
+    }
+
+    /* Geçmiş Tablosunu Karta Dönüştürme (Zaten vardı ama pekiştirdik) */
+    #gecmisIcerik tr {
+        margin-bottom: 15px;
+        border-radius: 10px;
+        padding: 15px;
+    }
 }
