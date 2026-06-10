@@ -798,164 +798,169 @@ svg {
 }
 
 /* ==========================================================================
-   15. MÜKEMMEL MOBİL GÖRÜNÜM (PRO SEVİYE KART & GRID TASARIMI)
+   15. MÜKEMMEL MOBİL GÖRÜNÜM (TAM UYUMLU, BÜTÜNLEŞİK KART VE ÜST BAR DÜZENİ)
    ========================================================================== */
 @media (max-width: 768px) {
-    /* 1. Üst Kısım (Header) Düzenlemesi - Simetrik Grid Yapısı */
-    .header-wrapper { padding: 15px 12px; }
-    .header-wrapper h1 { font-size: 20px; width: 100%; text-align: center; margin-bottom: 15px; }
+    /* Genel Ekran ve Panel Düzenlemeleri */
+    body { padding: 12px !important; }
+    .container { width: 100% !important; max-width: 100% !important; }
+    
+    .panel { 
+        padding: 15px !important; 
+        border-radius: 12px !important; 
+        width: 100% !important; 
+        box-sizing: border-box !important; 
+        margin-bottom: 12px !important; 
+    }
+
+    /* 1. Üst Ana Bar (Header Wrapper) - Tam Bütünlük Düzeni */
+    .header-wrapper { 
+        flex-direction: column !important; 
+        align-items: stretch !important; 
+        padding: 15px !important; 
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
+        box-sizing: border-box !important;
+    }
+    .header-wrapper h1 { font-size: 18px !important; text-align: center !important; margin-bottom: 12px !important; }
+    
+    /* Üst Butonların 3'lü Eşit Dağılım Gridi */
     .header-wrapper .flex-row { 
-        width: 100%; 
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); /* 3 butonu kusursuz eşitler */
-        gap: 8px; 
-        align-items: center;
+        width: 100% !important; 
+        display: grid !important; 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
     }
     #userEmailDisplay { 
-        grid-column: 1 / -1; /* E-postayı tam genişliğe yay */
-        text-align: center; 
-        font-size: 13px; 
-        background: var(--bg-color);
-        padding: 6px;
-        border-radius: 6px;
-        margin-bottom: 5px;
-        white-space: nowrap; 
-        overflow: hidden; 
-        text-overflow: ellipsis;
+        grid-column: 1 / -1 !important; 
+        text-align: center !important; 
+        font-size: 12px !important; 
+        background: var(--bg-color) !important;
+        padding: 6px !important;
+        border-radius: 6px !important;
+        margin-bottom: 4px !important;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    
     #helpBtn, #logoutBtn, .theme-toggle {
-        width: 100% !important; 
-        min-width: 0 !important;
-        padding: 8px 0 !important;
-        font-size: 12px !important;
+        width: 100% !important; min-width: 0 !important;
+        height: 36px !important; padding: 0 !important;
+        font-size: 12px !important; border-radius: 8px !important;
     }
 
-    /* 2. Menü Butonları (Yatay Kaydırılabilir Scroll) */
-    .nav-buttons { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; gap: 8px; }
-    .nav-buttons::-webkit-scrollbar { display: none; }
-    .nav-buttons button { flex: 0 0 auto; white-space: nowrap; margin: 0; }
+    /* 2. Ders Navigasyon Menüsü (Yatay Kaydırılabilir Şerit) */
+    .nav-buttons { 
+        display: flex !important; flex-wrap: nowrap !important; 
+        overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; 
+        justify-content: flex-start !important; gap: 6px !important;
+        padding-bottom: 8px !important; margin-bottom: 12px !important; scrollbar-width: none !important; 
+    }
+    .nav-buttons::-webkit-scrollbar { display: none !important; }
+    .nav-buttons button { flex: 0 0 auto !important; white-space: nowrap !important; padding: 8px 14px !important; font-size: 13px !important; border-radius: 8px !important; }
 
-    /* 3. Kontrol Paneli (Tarih, Süre, Arama - Alt Alta) */
-    .meta-inputs { flex-direction: column; align-items: stretch; gap: 10px; padding: 15px; }
-    .meta-inputs .flex-row { justify-content: space-between; width: 100%; }
-    .meta-inputs .ml-auto { margin-left: 0 !important; flex-direction: column; width: 100%; gap: 10px; }
-    #konuArama, #btnBoslariKapat { width: 100% !important; }
+    /* 3. Deneme No ve Silme Header Alanı */
+    .deneme-header { flex-direction: column !important; align-items: stretch !important; text-align: center !important; gap: 10px !important; padding-bottom: 10px !important; }
+    .deneme-header h2 { font-size: 15px !important; margin: 0 !important; }
+    .deneme-controls { justify-content: center !important; width: 100% !important; gap: 6px !important; }
+    .deneme-controls input[type="number"] { width: 65px !important; height: 34px !important; }
+    .deneme-controls button { height: 34px !important; padding: 0 12px !important; }
 
-    /* 4. Tabloyu Karta Dönüştür ve ANA CHECKBOX'ı Geri Getir */
-    .table-responsive { border: none; max-height: none; overflow: visible; background: transparent; }
-    table, tbody, tr, td, th { display: block; }
+    /* 4. Kontrol Paneli (Tarih, Süre, Arama, İşlemsizleri Kapat) - Çökme Korumalı Form */
+    .meta-inputs { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; padding: 12px !important; border-radius: 10px !important; }
     
-    /* Ana Checkbox (Tümünü Seç) Barı */
-    thead { display: block; margin-bottom: 15px; }
+    .meta-inputs .flex-row { 
+        flex-direction: column !important; align-items: stretch !important; 
+        gap: 6px !important; width: 100% !important; 
+    }
+    .meta-inputs .flex-row label { 
+        margin: 0 !important; font-size: 12px !important; text-align: left !important;
+        display: flex !important; align-items: center !important; gap: 4px !important; color: var(--text-muted);
+    }
+    .meta-inputs input[type="date"], .meta-inputs input[type="number"] { 
+        width: 100% !important; box-sizing: border-box !important; height: 36px !important; 
+    }
+    
+    .meta-inputs .ml-auto { margin-left: 0 !important; flex-direction: column !important; width: 100% !important; gap: 8px !important; }
+    #konuArama, #btnBoslariKapat { width: 100% !important; box-sizing: border-box !important; height: 36px !important; margin: 0 !important; }
+
+    /* 5. Masaüstü Tablo Yapısını Tamamen Sıfırlama */
+    .table-responsive { border: none !important; max-height: none !important; overflow: visible !important; width: 100% !important; }
+    table { min-width: 0 !important; width: 100% !important; display: block !important; }
+    tbody, tr, td, th, thead { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+    
+    /* 6. Mobilde "Tümünü Seç / Ana Checkbox" Barı - Alt Kartlarla Birebir Eşit */
+    thead { margin-bottom: 10px !important; }
     thead tr { 
-        display: flex; 
-        align-items: center; 
-        background: var(--card-bg); 
-        border: 1px solid var(--border-color); 
-        border-radius: 8px; 
-        padding: 12px 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        display: flex !important; flex-direction: row !important; align-items: center !important; 
+        background: var(--card-bg) !important; border: 1px solid var(--border-color) !important; 
+        border-radius: 12px !important; padding: 12px 15px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
     }
-    thead th { display: none; border: none; padding: 0; text-align: left; background: transparent; box-shadow: none; }
-    thead th:nth-child(1) { display: block; margin-right: 15px; } /* Sadece Checkbox'ı göster */
-    thead th:nth-child(2) { display: block; flex: 1; text-transform: none; font-weight: bold; font-size: 14px; color: var(--text-main); } /* Konu Adı yazısı */
-    thead th:nth-child(2)::after { content: " (Tümünü Seç)"; font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 5px; }
+    thead th { display: none !important; background: transparent !important; box-shadow: none !important; border: none !important; padding: 0 !important; }
+    thead th:nth-child(1) { display: block !important; width: auto !important; margin-right: 12px !important; } 
+    thead th:nth-child(2) { display: block !important; flex: 1 !important; text-align: left !important; font-size: 14px !important; font-weight: bold !important; color: var(--text-main) !important; } 
+    thead th:nth-child(2)::after { content: " (Tümünü Seç)" !important; font-size: 11px !important; color: var(--text-muted) !important; font-weight: normal !important; margin-left: 4px !important; }
 
-    /* Konu Kartları */
+    /* 7. İnce, Kompakt ve Tam Uyumlu Konu Kartları */
     #dersTbody tr {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 12px; 
-        margin-bottom: 12px; 
-        padding: 15px; 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        position: relative;
+        background: var(--card-bg) !important; border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important; margin-bottom: 10px !important; padding: 15px !important; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important; position: relative !important;
     }
-
-    #dersTbody tr.pasif-satir { opacity: 0.6; background: var(--bg-color); }
+    #dersTbody tr.pasif-satir { opacity: 0.55 !important; background: var(--bg-color) !important; }
     
-    #dersTbody td:nth-child(1) { position: absolute; top: 15px; left: 15px; border: none; padding: 0; }
+    #dersTbody td:nth-child(1) { position: absolute !important; top: 16px !important; left: 15px !important; border: none !important; padding: 0 !important; width: auto !important; }
     
     #dersTbody td:nth-child(2) {
-        border: none;
-        padding: 0 0 12px 35px; /* Checkbox'a yer bırak */
-        font-weight: 600;
-        font-size: 14px; 
-        color: var(--text-main);
-        text-align: left;
-        border-bottom: 1px solid var(--border-color); 
-        margin-bottom: 10px;
-        line-height: 1.4;
+        border: none !important; padding: 0 0 12px 32px !important; 
+        font-weight: 600 !important; font-size: 14px !important; color: var(--text-main) !important;
+        text-align: left !important; border-bottom: 1px solid var(--border-color) !important; 
+        margin-bottom: 10px !important; line-height: 1.4 !important;
     }
 
+    /* Doğru, Yanlış, Boş Satırları ve Küçültülmüş Stepper'lar */
     #dersTbody td:nth-child(3), #dersTbody td:nth-child(4), #dersTbody td:nth-child(5) {
-        border: none; padding: 6px 0; display: flex; justify-content: space-between; align-items: center;
+        border: none !important; padding: 5px 0 !important; display: flex !important; justify-content: space-between !important; align-items: center !important;
     }
+    .stepper-group { height: 30px !important; border-radius: 6px !important; }
+    .stepper-btn { width: 30px !important; font-size: 16px !important; }
+    .stepper-input { width: 32px !important; font-size: 13px !important; }
 
-    /* Stepper'lar - Dokunmatik Ekrana Uygun Optimum Boyut */
-    .stepper-group { height: 32px; border-radius: 8px; }
-    .stepper-btn { width: 32px; font-size: 18px; }
-    .stepper-input { width: 36px !important; font-size: 14px !important; }
+    #dersTbody td:nth-child(3)::before { content: "Doğru" !important; font-size: 13px !important; font-weight: 600 !important; color: var(--success-color) !important; }
+    #dersTbody td:nth-child(4)::before { content: "Yanlış" !important; font-size: 13px !important; font-weight: 600 !important; color: var(--alert-color) !important; }
+    #dersTbody td:nth-child(5)::before { content: "Boş" !important; font-size: 13px !important; font-weight: 600 !important; color: #0ea5e9 !important; }
 
-    #dersTbody td:nth-child(3)::before { content: "Doğru"; font-size: 13px; font-weight: 600; color: var(--success-color); }
-    #dersTbody td:nth-child(4)::before { content: "Yanlış"; font-size: 13px; font-weight: 600; color: var(--alert-color); }
-    #dersTbody td:nth-child(5)::before { content: "Boş"; font-size: 13px; font-weight: 600; color: #0ea5e9; }
-
-    /* Net Değeri - Şık Gri Kutu */
+    /* Net Kutusu alanı */
     #dersTbody td:nth-child(6) {
-        border: none;
-        background: var(--bg-color);
-        border-radius: 8px;
-        margin-top: 10px;
-        padding: 10px 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 14px;
-        font-weight: 700;
+        border: none !important; background: var(--input-bg) !important; border-radius: 8px !important;
+        margin-top: 10px !important; padding: 10px 12px !important; 
+        display: flex !important; justify-content: space-between !important; align-items: center !important;
+        font-size: 13px !important; font-weight: 700 !important;
     }
-    #dersTbody td:nth-child(6)::before { content: "Net:"; color: var(--text-muted); font-weight: 600;}
+    #dersTbody td:nth-child(6)::before { content: "Net:" !important; color: var(--text-muted) !important; font-weight: 600 !important; }
 
-    /* 5. Tfoot (Genel Toplam) Düzenlemesi - Tam Uyumlu Renkler */
+    /* 8. Alt Kısım (Genel Toplam) Kart Düzenlemesi */
     tfoot tr {
-        background: var(--card-bg) !important;
-        color: var(--text-main) !important;
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        padding: 15px;
-        margin-top: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        background: var(--card-bg) !important; color: var(--text-main) !important;
+        border: 2px solid var(--border-color) !important; border-radius: 12px !important;
+        padding: 15px !important; margin-top: 15px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
     }
-    tfoot td {
-        border: none;
-        color: var(--text-main) !important;
-        text-align: left !important;
-        padding: 8px 0;
-        display: flex;
-        justify-content: space-between;
-        font-size: 14px;
-        border-bottom: 1px solid var(--border-color);
-    }
-    tfoot td:nth-child(1) { display: none; }
-    tfoot td:nth-child(2)::before { content: "Toplam Doğru:"; font-weight: 600; color: var(--success-color); }
-    tfoot td:nth-child(3)::before { content: "Toplam Yanlış:"; font-weight: 600; color: var(--alert-color); }
-    tfoot td:nth-child(4)::before { content: "Toplam Boş:"; font-weight: 600; color: #0ea5e9; }
+    tfoot td { border: none !important; color: var(--text-main) !important; text-align: left !important; padding: 8px 0 !important; display: flex !important; justify-content: space-between !important; font-size: 13px !important; border-bottom: 1px solid var(--border-color) !important; }
+    tfoot td:nth-child(1) { display: none !important; }
+    tfoot td:nth-child(2)::before { content: "Toplam Doğru:" !important; font-weight: 600 !important; color: var(--success-color) !important; }
+    tfoot td:nth-child(3)::before { content: "Toplam Yanlış:" !important; font-weight: 600 !important; color: var(--alert-color) !important; }
+    tfoot td:nth-child(4)::before { content: "Toplam Boş:" !important; font-weight: 600 !important; color: #0ea5e9 !important; }
     
-    /* Toplam Net Kısmı */
     tfoot td:nth-child(5) {
-        border-bottom: none;
-        margin-top: 10px;
-        padding-top: 12px;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        font-size: 16px;
-        font-weight: 800;
-        color: var(--primary-color) !important;
-        background: var(--target-bg);
-        border-radius: 8px;
+        border-bottom: none !important; margin-top: 10px !important; padding-top: 12px !important;
+        flex-direction: column !important; align-items: center !important; gap: 5px !important;
+        font-size: 15px !important; font-weight: 800 !important; color: var(--primary-color) !important;
+        background: var(--target-bg) !important; border-radius: 8px !important;
     }
 
-    #gecmisIcerik tr { margin-bottom: 15px; border-radius: 10px; padding: 15px; }
+    /* Diğer Panel Izgaraları ve Geçmiş Tablosu Revizeleri */
+    .analiz-grid, .analiz-grid-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
+    .card-box { padding: 15px !important; }
+    #gecmisIcerik tr { margin-bottom: 12px !important; border-radius: 12px !important; padding: 12px !important; }
 }
