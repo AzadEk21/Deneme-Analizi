@@ -797,24 +797,24 @@ svg {
     pointer-events: auto !important;
 }
 
-/* YENİ: Yapay Zeka Butonu Özel Stili */
-.btn-purple {
-    background-color: var(--purple-color);
-    color: white;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-}
-.btn-purple:hover {
-    background-color: #7c3aed;
-    transform: translateY(-1px);
-    color: white;
+/* ==========================================================================
+   YAPAY ZEKA BUTONU VE FİLTRELER İÇİN MOBİL YERLEŞİM DÜZELTMESİ
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* YZ Butonunu mobilde kendi satırına alır ve tam genişliğe yayar */
+    #btnAiReport {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+        margin-bottom: 5px !important; /* Altındaki butonlarla arasına boşluk bırakır */
+    }
+    
+    /* Yanındaki "Son 3 Deneme" filtrelerini de tam ortalar */
+    #analizFiltreler {
+        width: 100% !important;
+        justify-content: center !important;
+    }
 }
 
 /* ==========================================================================
