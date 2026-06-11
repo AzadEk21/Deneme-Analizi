@@ -320,16 +320,135 @@ document.addEventListener('DOMContentLoaded', () => {
         resArea.classList.remove('d-none');
     });
 
+    // ============================================================================
+    // YENİ: YAPAY ZEKA İÇİN AKILLI RAPOR ÜRETİCİ (PROMPT GENERATOR - PRO VERSİYON)
+    // ============================================================================
+    document.getElementById('btnAiReport')?.addEventListener('click', () => {
+        let denemeNolar = new Set(); 
+        Object.keys(db).forEach(d => { if(d !== 'meta' && d !== 'lastUpdated') Object.keys(db[d]).forEach(no => denemeNolar.add(parseInt(no))); });
+        
+        let sirali = Array.from(denemeNolar).sort((a,b) => a-b); 
+        if(sirali.length === 0) return showToast("Rapor oluşturmak için en az 1 deneme girmelisiniz.", "error");
+
+        let analizEdilecekler = aktifAnalizFiltresi === 0 ? sirali : sirali.slice(-aktifAnalizFiltresi);
+        let zamanAraligiMetni = aktifAnalizFiltresi === 0 ? "Tüm deneme geçmişime" : `Son ${aktifAnalizFiltresi} denememe`;
+
+        // 1. Makro Verileri Hesapla (Ortalama Netler, Süre ve Hedefler)
+        let toplamSure = 0, sureGirilenDeneme = 0;
+        let dersNetleri = { "Türkçe": 0, "Matematik": 0, "Tarih": 0, "Coğrafya": 0, "Vatandaşlık": 0 };
+        
+        analizEdilecekler.forEach(dNo => {
+            if(db.meta?.[dNo]?.sure && parseInt(db.meta[dNo].sure) > 0) {
+                toplamSure += parseInt(db.meta[dNo].sure);
+                sureGirilenDeneme++;
+            }
+            Object.keys(müfredat).forEach(ders => {
+                let dN = 0;
+                müfredat[ders].forEach(k => {
+                    let data = db[ders]?.[dNo]?.[k];
+                    if(!data || data.s !== false) { dN += ((data?.d || 0) - ((data?.y || 0) / 4)); }
+                });
+                dersNetleri[ders] += dN;
+            });
+        });
+
+        let ortSure = sureGirilenDeneme > 0 ? Math.round(toplamSure / sureGirilenDeneme) : "Belirtilmemiş";
+        let denemeSayisi = analizEdilecekler.length;
+        
+        let ortGY = ((dersNetleri["Türkçe"] + dersNetleri["Matematik"]) / denemeSayisi).toFixed(2);
+        let ortGK = ((dersNetleri["Tarih"] + dersNetleri["Coğrafya"] + dersNetleri["Vatandaşlık"]) / denemeSayisi).toFixed(2);
+        
+        // Hedefleri çek
+        let hedefGY = localStorage.getItem(`gy_target_${currentUid}`) || "Belirtilmedi";
+        let hedefGK = localStorage.getItem(`gk_target_${currentUid}`) || "Belirtilmedi";
+
+        // Prompt Başlangıcı (Makro Analiz)
+        let prompt = `Merhaba, ben KPSS Lisans sınavına hazırlanan bir öğrenciyim. Bir yapay zeka eğitim koçu ve veri bilimci olarak aşağıdaki verilerimi analiz etmeni ve bana stratejik bir yol haritası çizmeni istiyorum.\n\n`;
+        
+        prompt += `📊 [GENEL DURUM ÖZETİM - ${zamanAraligiMetni} Göre]\n`;
+        prompt += `- Genel Yetenek (GY) Ortalamam: ${ortGY} Net (Hedefim: ${hedefGY} Net)\n`;
+        prompt += `- Genel Kültür (GK) Ortalamam: ${ortGK} Net (Hedefim: ${hedefGK} Net)\n`;
+        prompt += `- Ortalama Sınav Tamamlama Sürem: ${ortSure} Dakika (KPSS Lisans normal süresi 130 dakikadır)\n\n`;
+        prompt += `Aşağıda ders bazlı ortalama netlerim ve konu bazlı yüzdelik başarı oranlarım (yanlarında trend durumu) bulunmaktadır:\n\n`;
+
+        // 2. Mikro Verileri Hesapla (Ders ve Konu Detayları)
+        Object.keys(müfredat).forEach(ders => {
+            let zayif = [], orta = [], iyi = [], korNokta = [];
+            let dersOrtalamaNet = (dersNetleri[ders] / denemeSayisi).toFixed(2);
+            
+            müfredat[ders].forEach(k => {
+                let yS = 0, dS = 0, bS = 0, sS = 0; 
+                let dIlk = 0, yIlk = 0, bIlk = 0; let dSon = 0, ySon = 0, bSon = 0;
+                let mid = Math.floor(analizEdilecekler.length / 2);
+                let dC = false;
+
+                analizEdilecekler.forEach((dNo, i) => {
+                    if (!db[ders] || !db[ders][dNo]) return; 
+                    let data = db[ders][dNo][k]; let s = data === undefined ? true : data.s;
+                    if(s) { 
+                        dC = true; sS++; 
+                        let d = Number(data?.d || 0); let y = Number(data?.y || 0); let b = Number(data?.b || 0); 
+                        bS += b; yS += y; dS += d; 
+                        if(i < mid) { dIlk += d; yIlk += y; bIlk += b; } else { dSon += d; ySon += y; bSon += b; } 
+                    }
+                });
+
+                if(!dC) {
+                    korNokta.push(k);
+                } else {
+                    let toplamSorulan = dS + yS + bS;
+                    if(sS > 0 && toplamSorulan > 0) {
+                        let isabet = (dS / toplamSorulan) * 100;
+                        
+                        let trendMetni = "";
+                        let toplamIlk = dIlk + yIlk + bIlk; let toplamSon = dSon + ySon + bSon;
+                        if(analizEdilecekler.length >= 2 && toplamIlk > 0 && toplamSon > 0) { 
+                            let ortIlk = (dIlk / toplamIlk) * 100; let ortSon = (dSon / toplamSon) * 100;
+                            if(ortSon > ortIlk) trendMetni = " 📈 Yükselişte"; 
+                            else if(ortSon < ortIlk) trendMetni = " 📉 Düşüşte"; 
+                        }
+
+                        let konuOzeti = `${k} (%${isabet.toFixed(0)}${trendMetni})`;
+                        if(isabet < 50) zayif.push(konuOzeti);
+                        else if(isabet < 85) orta.push(konuOzeti);
+                        else iyi.push(konuOzeti);
+                    }
+                }
+            });
+
+            if(zayif.length > 0 || orta.length > 0 || iyi.length > 0) {
+                prompt += `📘 [${ders.toUpperCase()}] - Ortalama: ${dersOrtalamaNet} Net\n`;
+                if(zayif.length > 0) prompt += `🔴 Zayıf/Kayıp Yaşanan Konular: ${zayif.join(', ')}\n`;
+                if(orta.length > 0) prompt += `🟡 Pratik İsteyen Konular: ${orta.join(', ')}\n`;
+                if(iyi.length > 0) prompt += `🟢 Güçlü Olunan Konular: ${iyi.join(', ')}\n`;
+                if(korNokta.length > 0) prompt += `⚠️ Hiç Soru Çözülmeyen/Boş Bırakılanlar: ${korNokta.join(', ')}\n`;
+                prompt += `\n`;
+            }
+        });
+
+        prompt += `📌 GÖREVLERİN:\n`;
+        prompt += `1. Zaman Yönetimi: Ortalama süremi KPSS gerçek sınav süresine (130 dk) göre değerlendir ve turlama/hızlanma taktikleri ver.\n`;
+        prompt += `2. Hedef Analizi: GY ve GK'de hedeflerime ne kadar uzak olduğumu söyleyip gerçekçi bir tablo çiz.\n`;
+        prompt += `3. Nokta Atışı Çalışma Programı: Ortalama neti düşük olan derslerime öncelik vererek önümüzdeki hafta için 'zayıf' ve 'düşüşte' olan konulardan hangilerini kesinlikle eritmem gerektiğini bana adım adım listele.\n`;
+
+        navigator.clipboard.writeText(prompt).then(() => {
+            showToast("YZ Raporu kopyalandı! ChatGPT veya Gemini'a yapıştırabilirsiniz.", "success");
+        }).catch(err => {
+            showToast("Kopyalama başarısız oldu. Tarayıcı izinlerini kontrol edin.", "error");
+        });
+    });
+
     document.addEventListener('click', (e) => {
-    // Tıklanan buton veya butonun içindeki ikon ise
-    if (e.target.closest('#helpBtn')) {
-        e.preventDefault();
-        const modal = document.getElementById('helpModal');
-        if (modal) {
-            modal.style.display = 'flex';
+        // Tıklanan buton veya butonun içindeki ikon ise
+        if (e.target.closest('#helpBtn')) {
+            e.preventDefault();
+            const modal = document.getElementById('helpModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
         }
-    }
-});
+    });
+
     document.getElementById('closeHelpBtn')?.addEventListener('click', () => { document.getElementById('helpModal').style.display = 'none'; });
     document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => { document.getElementById('silModal').style.display = 'none'; });
 
@@ -450,10 +569,14 @@ function renderPanel() {
         <div class="panel active">
             <div class="deneme-header">
                 <h2>${aktifDers} <span class="fs-14 text-muted fw-normal">(Limit: ${SORU_LIMITLERI[aktifDers]})</span></h2>
-                <div class="deneme-controls">
-                    <button id="btnPrevDnm" class="btn-primary"><i class="fas fa-chevron-left"></i></button>
-                    <input type="number" id="denemeNoInput" value="${aktifDenemeNo}" min="1">
-                    <button id="btnNextDnm" class="btn-primary"><i class="fas fa-chevron-right"></i></button>
+                <div class="deneme-controls" style="flex-wrap: wrap;">
+                    <div class="flex-row align-center gap-5">
+                        <span class="fw-bold text-muted fs-14 mr-5">Deneme No:</span>
+                        <button id="btnPrevDnm" class="btn-primary" title="Önceki Deneme"><i class="fas fa-chevron-left"></i></button>
+                        <input type="number" id="denemeNoInput" value="${aktifDenemeNo}" min="1" style="width: 50px;">
+                        <button id="btnNextDnm" class="btn-primary" title="Sonraki Deneme"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <button id="btnYeniDnm" class="btn-success"><i class="fas fa-plus"></i> Yeni Ekle</button>
                     <button id="btnSilDnm" class="btn-danger"><i class="fas fa-trash"></i> Sil</button>
                 </div>
             </div>
@@ -506,8 +629,75 @@ function renderPanel() {
     const tbody = document.getElementById('dersTbody');
     const anaCb = document.getElementById('anaCheckbox');
     
-    document.getElementById('btnPrevDnm').addEventListener('click', () => { aktifDenemeNo = Math.max(1, aktifDenemeNo - 1); aktifAramaTerimi = ""; renderPanel(); });
-    document.getElementById('btnNextDnm').addEventListener('click', () => { aktifDenemeNo++; aktifAramaTerimi = ""; renderPanel(); });
+    // YENİ: Sistemdeki kayıtlı en büyük deneme numarasını bulan yardımcı fonksiyon
+    const getMaxDenemeNo = () => {
+        let dNolar = new Set();
+        Object.keys(db).forEach(d => { 
+            if(d !== 'meta' && d !== 'lastUpdated') {
+                Object.keys(db[d]).forEach(no => dNolar.add(parseInt(no))); 
+            }
+        });
+        return dNolar.size > 0 ? Math.max(...dNolar) : 1;
+    };
+
+    // Sol Ok: Sadece 1'den büyükse geriye gider
+    document.getElementById('btnPrevDnm').addEventListener('click', () => { 
+        if(aktifDenemeNo > 1) {
+            aktifDenemeNo--; 
+            aktifAramaTerimi = ""; 
+            renderPanel(); 
+        }
+    });
+    
+    // GÜNCELLENDİ: Sağ Ok artık boş sayfa AÇMAZ. Sadece var olan son denemeye kadar gider.
+    document.getElementById('btnNextDnm').addEventListener('click', () => { 
+        let maxNo = getMaxDenemeNo();
+        if (aktifDenemeNo < maxNo) {
+            aktifDenemeNo++; 
+            aktifAramaTerimi = ""; 
+            renderPanel(); 
+        } else {
+            showToast("Son denemedesiniz. Yeni girmek için '+ Yeni Ekle' butonuna basın.", "info");
+        }
+    });
+    
+    // GÜNCELLENDİ: Elle aşırı büyük sayı girilmesini engeller
+    document.getElementById('denemeNoInput').addEventListener('change', (e) => { 
+        let maxNo = getMaxDenemeNo();
+        let val = parseInt(e.target.value);
+        if(isNaN(val) || val < 1) val = 1;
+        
+        // Eğer kullanıcı var olmayan büyük bir sayı girerse onu son denemeye sabitler
+        if(val > maxNo) {
+            val = maxNo;
+            showToast(`Sadece var olan denemelere gidebilirsiniz. Yeni için '+ Yeni Ekle'yi kullanın.`, "warning");
+        }
+        
+        aktifDenemeNo = val; 
+        e.target.value = val; 
+        aktifAramaTerimi = ""; 
+        renderPanel(); 
+    });
+    
+    // YENİ EKLENEN KISIM: Tek ve Gerçek Yeni Deneme Oluşturucu
+    document.getElementById('btnYeniDnm').addEventListener('click', () => {
+        let maxNo = getMaxDenemeNo();
+        aktifDenemeNo = maxNo + 1; // En büyük numaradan bir sonrakini aç
+        aktifAramaTerimi = "";
+        
+        // Tarih ve süreyi yeni deneme için otomatik sıfırla/hazırla
+        if(!db.meta) db.meta = {};
+        if(!db.meta[aktifDenemeNo]) {
+            // Bugünün tarihini YYYY-MM-DD formatında alıp ekler (Saat farkı hatalarını önleyerek)
+            let today = new Date();
+            let dateString = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            db.meta[aktifDenemeNo] = { tarih: dateString, sure: 130 };
+        }
+        
+        kaydet();
+        renderPanel();
+        showToast(`${aktifDenemeNo}. Deneme oluşturuldu! Başarılar.`, "success");
+    });
     
     document.getElementById('denemeNoInput').addEventListener('change', (e) => { 
         let val = parseInt(e.target.value);
