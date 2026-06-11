@@ -979,8 +979,64 @@ svg {
         background: var(--target-bg) !important; border-radius: 8px !important;
     }
 
-    /* Diğer Panel Izgaraları ve Geçmiş Tablosu Revizeleri */
+    /* Diğer Panel Izgaraları Revizeleri */
     .analiz-grid, .analiz-grid-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
     .card-box { padding: 15px !important; }
-    #gecmisIcerik tr { margin-bottom: 12px !important; border-radius: 12px !important; padding: 12px !important; }
+
+    /* ==========================================================================
+       GEÇMİŞ DENEMELER TABLOSU MOBİL KART GÖRÜNÜMÜ DÜZELTMESİ
+       ========================================================================== */
+    /* Ders tablosundan bulaşan 'Tümünü Seç' yazısını ve başlıkları burada gizle */
+    #gecmisIcerik thead { 
+        display: none !important; 
+    }
+    
+    #gecmisIcerik table, #gecmisIcerik tbody {
+        display: block !important;
+        width: 100% !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Her bir geçmiş denemeyi bağımsız bir karta dönüştür */
+    #gecmisIcerik tr {
+        display: flex !important;
+        flex-direction: column !important;
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        margin-bottom: 15px !important;
+        padding: 15px 20px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04) !important;
+    }
+
+    /* Kart içindeki her satırı (Tarih, Türkçe vs.) yan yana diz */
+    #gecmisIcerik td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 8px 0 !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        font-size: 14px !important;
+        color: var(--text-main) !important;
+        text-align: right !important;
+    }
+
+    /* Sol tarafa gizli etiketleri (data-label) yazdır */
+    #gecmisIcerik td::before {
+        content: attr(data-label) !important;
+        font-weight: 600 !important;
+        color: var(--text-muted) !important;
+        text-align: left !important;
+    }
+
+    /* Toplam Net satırını belirginleştir */
+    #gecmisIcerik td:last-child {
+        border-bottom: none !important;
+        margin-top: 8px !important;
+        padding-top: 12px !important;
+        font-size: 16px !important;
+        border-top: 2px dashed var(--border-color) !important;
+        background: transparent !important;
+    }
 }
