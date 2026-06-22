@@ -1182,3 +1182,34 @@ svg {
         margin: 0 !important;
     }
 }
+/* ==========================================================================
+   19. ALT TOPLAM (FOOTER) HÜCRESİ VE ROZET DÜZELTMESİ
+   ========================================================================== */
+#tdTopNet {
+    padding: 8px 4px !important;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Taşan min-width değerlerini ezip, yazıları şık bir rozete çeviriyoruz */
+.saglama-uyari {
+    min-width: unset !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px !important;
+    padding: 3px 6px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 4px;
+}
+
+.saglama-basarili {
+    min-width: unset !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px !important;
+    padding: 3px 6px;
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 4px;
+}
