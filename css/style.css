@@ -1040,3 +1040,145 @@ svg {
         background: transparent !important;
     }
 }
+
+/* ==========================================================================
+   16. HIZLI GİRİŞ VE SAĞLAMA STİLLERİ
+   ========================================================================== */
+.hizli-giris-panel {
+    background: var(--target-bg);
+    border: 1px solid var(--target-border);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+[data-theme="dark"] .hizli-giris-panel {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: #1e3a8a;
+}
+.hizli-giris-inputs {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.hizli-giris-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.hizli-giris-item input {
+    width: 50px !important;
+    height: 32px !important;
+    text-align: center;
+}
+.hizli-giris-net {
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--primary-color);
+    background: var(--bg-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+.saglama-uyari {
+    color: var(--alert-color);
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+}
+.saglama-basarili {
+    color: var(--success-color);
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+}
+/* ==========================================================================
+   17. UX: KAYMA ÖNLEME VE DİNAMİK UYARILAR
+   ========================================================================== */
+/* Artı Eksi butonlarının arasındaki sayının genişleyip daralmasını engeller */
+.stepper-input {
+    min-width: 36px !important;
+    font-variant-numeric: tabular-nums; /* Rakamların eşit alan kaplamasını sağlar */
+}
+
+/* Tablonun son sütunundaki (Net) çift haneye geçince yaşanan kaymayı durdurur */
+#dersTbody td:last-child {
+    min-width: 65px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hızlı Giriş kısmındaki netin genişliğini sabitler */
+.hizli-giris-net {
+    min-width: 90px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Uyuşmazlık uyarısına dikkat çekici bir kalp atışı (titreme) efekti ekler */
+.saglama-uyari {
+    min-width: 175px;
+    display: inline-block;
+    animation: pulseWarning 1.5s infinite;
+}
+.saglama-basarili {
+    min-width: 80px;
+    display: inline-block;
+}
+
+@keyframes pulseWarning {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(0.98); color: #dc2626; }
+    100% { opacity: 1; transform: scale(1); }
+}
+/* ==========================================================================
+   18. TABLO VE BUTON KAYMALARINI KESİN ENGELLEYEN SABİT ÖLÇÜLER
+   ========================================================================== */
+/* Tablonun içeriğe göre esnemesini tamamen durdurur */
+.table-responsive table {
+    table-layout: fixed; 
+}
+
+/* Stepper (Artı/Eksi) kutusunun genişliğini donduruyoruz */
+.stepper-group {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    margin: 0 auto; /* Kutuyu hücrenin tam ortasına sabitler */
+}
+
+/* İçindeki sayı alanının genişliğini donduruyoruz */
+.stepper-input {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    text-align: center;
+    padding: 0 !important;
+}
+
+/* Net sütununun çift hanede kaymasını engeller */
+#dersTbody td:last-child {
+    min-width: 80px !important;
+    width: 80px !important;
+    text-align: center;
+}
+
+/* Mobil görünümde ortalama ayarını iptal edip sağa yaslamayı koruyoruz */
+@media (max-width: 768px) {
+    .stepper-group {
+        margin: 0 !important;
+    }
+}
