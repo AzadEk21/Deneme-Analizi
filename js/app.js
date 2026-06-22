@@ -113,6 +113,24 @@ function kaydet() {
     }
 }
 
+// --- YENİ: AKILLI NET HESAPLAYICI ---
+function getDersVerisi(ders, dNo) {
+    let hg = db[ders]?.[dNo]?._hizliGiris;
+    let hgTop = (Number(hg?.d)||0) + (Number(hg?.y)||0) + (Number(hg?.b)||0);
+    
+    let detayD = 0, detayY = 0, detayB = 0;
+    müfredat[ders].forEach(k => {
+        let data = db[ders]?.[dNo]?.[k];
+        if(!data || data.s !== false) {
+            detayD += Number(data?.d||0); detayY += Number(data?.y||0); detayB += Number(data?.b||0);
+        }
+    });
+    
+    // Eğer hızlı girişe değer yazılmışsa onu baz al, yazılmamışsa detay tablosunu baz al
+    if(hgTop > 0) return { d: Number(hg.d)||0, y: Number(hg.y)||0, b: Number(hg.b)||0, net: (Number(hg.d)||0) - ((Number(hg.y)||0)/4), isHizli: true };
+    return { d: detayD, y: detayY, b: detayB, net: detayD - (detayY/4), isHizli: false };
+}
+
 // ============================================================================
 // HAYALET VERİ (GHOST DATA) TEMİZLEYİCİSİ
 // ============================================================================
@@ -274,14 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let gyCurrent = 0, gkCurrent = 0;
         
         Object.keys(müfredat).forEach(ders => {
-            let n = 0; 
-            müfredat[ders].forEach(k => { 
-                let data = db[ders]?.[dNo]?.[k];
-                if (!data || data.s !== false) { 
-                    let d = data?.d || 0; let y = data?.y || 0; 
-                    n += (d - (y / 4)); 
-                }
-            });
+            let n = getDersVerisi(ders, dNo).net;
             if(ders === "Türkçe" || ders === "Matematik") gyCurrent += n; else gkCurrent += n;
         });
 
@@ -343,12 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sureGirilenDeneme++;
             }
             Object.keys(müfredat).forEach(ders => {
-                let dN = 0;
-                müfredat[ders].forEach(k => {
-                    let data = db[ders]?.[dNo]?.[k];
-                    if(!data || data.s !== false) { dN += ((data?.d || 0) - ((data?.y || 0) / 4)); }
-                });
-                dersNetleri[ders] += dN;
+                dersNetleri[ders] += getDersVerisi(ders, dNo).net;
             });
         });
 
@@ -565,6 +571,9 @@ function renderPanel() {
     const mainContent = document.getElementById('mainContent');
     let hepsiSecili = true;
     
+    // YENİ: Hızlı Giriş Verisini Çek
+    let hgVeri = db[aktifDers]?.[aktifDenemeNo]?._hizliGiris || {d:0, y:0, b:0};
+    
     let html = `
         <div class="panel active">
             <div class="deneme-header">
@@ -597,6 +606,22 @@ function renderPanel() {
                     </div>
                 </div>
             </div>
+
+            <div class="hizli-giris-panel">
+                <div class="flex-row align-center gap-10">
+                    <i class="fas fa-bolt text-warning fs-18"></i>
+                    <div>
+                        <div class="fw-bold">Hızlı Giriş & Sağlama</div>
+                        <div class="fs-13 text-muted">Sadece genel sonucu girmek için burayı kullanabilirsiniz.</div>
+                    </div>
+                </div>
+                <div class="hizli-giris-inputs">
+                    <div class="hizli-giris-item text-success">D: <input type="number" id="hg-d" value="${hgVeri.d}" min="0" class="auth-input m-0"></div>
+                    <div class="hizli-giris-item text-danger">Y: <input type="number" id="hg-y" value="${hgVeri.y}" min="0" class="auth-input m-0"></div>
+                    <div class="hizli-giris-item text-info">B: <input type="number" id="hg-b" value="${hgVeri.b}" min="0" class="auth-input m-0"></div>
+                    <div class="hizli-giris-net" id="hg-net">Net: ${(hgVeri.d - (hgVeri.y/4)).toFixed(2)}</div>
+                </div>
+            </div>
             
             <div class="table-responsive">
                 <table>
@@ -604,10 +629,10 @@ function renderPanel() {
                         <tr>
                             <th style="width:40px;"><input type="checkbox" id="anaCheckbox" checked></th>
                             <th>Konu Adı</th>
-                            <th class="text-success text-center">Doğru</th>
-                            <th class="text-danger text-center">Yanlış</th>
-                            <th class="text-info text-center">Boş</th>
-                            <th>Net</th>
+                            <th class="text-success text-center" style="width: 140px; min-width: 140px;">Doğru</th>
+                            <th class="text-danger text-center" style="width: 140px; min-width: 140px;">Yanlış</th>
+                            <th class="text-info text-center" style="width: 140px; min-width: 140px;">Boş</th>
+                            <th style="width: 80px; min-width: 80px;">Net</th>
                         </tr>
                     </thead>
                     <tbody id="dersTbody"></tbody>
@@ -617,7 +642,7 @@ function renderPanel() {
                             <td id="tdTopD" class="text-success fw-bold text-center">0</td>
                             <td id="tdTopY" class="text-danger fw-bold text-center">0</td>
                             <td id="tdTopB" class="text-info fw-bold text-center">0</td>
-                            <td id="tdTopNet" class="text-primary">Net: 0</td>
+                            <td id="tdTopNet" class="text-primary" style="flex-wrap: wrap;">Net: 0</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -629,7 +654,6 @@ function renderPanel() {
     const tbody = document.getElementById('dersTbody');
     const anaCb = document.getElementById('anaCheckbox');
     
-    // YENİ: Sistemdeki kayıtlı en büyük deneme numarasını bulan yardımcı fonksiyon
     const getMaxDenemeNo = () => {
         let dNolar = new Set();
         Object.keys(db).forEach(d => { 
@@ -640,69 +664,70 @@ function renderPanel() {
         return dNolar.size > 0 ? Math.max(...dNolar) : 1;
     };
 
-    // Sol Ok: Sadece 1'den büyükse geriye gider
-    document.getElementById('btnPrevDnm').addEventListener('click', () => { 
-        if(aktifDenemeNo > 1) {
-            aktifDenemeNo--; 
-            aktifAramaTerimi = ""; 
-            renderPanel(); 
+    // --- YENİ: Hızlı Giriş Event Listener'ları ---
+    const updateHizliGiris = (e) => {
+        let dInp = document.getElementById('hg-d');
+        let yInp = document.getElementById('hg-y');
+        let bInp = document.getElementById('hg-b');
+        
+        let d = parseInt(dInp.value) || 0;
+        let y = parseInt(yInp.value) || 0;
+        let b = parseInt(bInp.value) || 0;
+        
+        let limit = SORU_LIMITLERI[aktifDers];
+        
+        // FİZİKİ FREN: Limit aşılırsa otomatik geri çeker
+        if(d + y + b > limit) {
+            showToast(`Toplam soru limiti (${limit}) aşılamaz!`, "error");
+            
+            if (e.target.id === 'hg-d') d = Math.max(0, limit - (y + b));
+            else if (e.target.id === 'hg-y') y = Math.max(0, limit - (d + b));
+            else if (e.target.id === 'hg-b') b = Math.max(0, limit - (d + y));
+            
+            dInp.value = d; yInp.value = y; bInp.value = b;
         }
+        
+        if(!db[aktifDers]) db[aktifDers] = {};
+        if(!db[aktifDers][aktifDenemeNo]) db[aktifDers][aktifDenemeNo] = {};
+        db[aktifDers][aktifDenemeNo]._hizliGiris = { d, y, b };
+        
+        document.getElementById('hg-net').textContent = `Net: ${(d - (y/4)).toFixed(2)}`;
+        kaydet();
+        hesaplaAltToplam();
+    };
+
+    document.getElementById('hg-d').addEventListener('input', updateHizliGiris);
+    document.getElementById('hg-y').addEventListener('input', updateHizliGiris);
+    document.getElementById('hg-b').addEventListener('input', updateHizliGiris);
+    // ----------------------------------------------
+
+    document.getElementById('btnPrevDnm').addEventListener('click', () => { 
+        if(aktifDenemeNo > 1) { aktifDenemeNo--; aktifAramaTerimi = ""; renderPanel(); }
     });
     
-    // GÜNCELLENDİ: Sağ Ok artık boş sayfa AÇMAZ. Sadece var olan son denemeye kadar gider.
     document.getElementById('btnNextDnm').addEventListener('click', () => { 
         let maxNo = getMaxDenemeNo();
-        if (aktifDenemeNo < maxNo) {
-            aktifDenemeNo++; 
-            aktifAramaTerimi = ""; 
-            renderPanel(); 
-        } else {
-            showToast("Son denemedesiniz. Yeni girmek için '+ Yeni Ekle' butonuna basın.", "info");
-        }
+        if (aktifDenemeNo < maxNo) { aktifDenemeNo++; aktifAramaTerimi = ""; renderPanel(); } 
+        else { showToast("Son denemedesiniz. Yeni girmek için '+ Yeni Ekle' butonuna basın.", "info"); }
     });
     
-    // GÜNCELLENDİ: Elle aşırı büyük sayı girilmesini engeller
     document.getElementById('denemeNoInput').addEventListener('change', (e) => { 
         let maxNo = getMaxDenemeNo();
         let val = parseInt(e.target.value);
         if(isNaN(val) || val < 1) val = 1;
-        
-        // Eğer kullanıcı var olmayan büyük bir sayı girerse onu son denemeye sabitler
-        if(val > maxNo) {
-            val = maxNo;
-            showToast(`Sadece var olan denemelere gidebilirsiniz. Yeni için '+ Yeni Ekle'yi kullanın.`, "warning");
-        }
-        
-        aktifDenemeNo = val; 
-        e.target.value = val; 
-        aktifAramaTerimi = ""; 
-        renderPanel(); 
+        if(val > maxNo) { val = maxNo; showToast(`Sadece var olan denemelere gidebilirsiniz.`, "warning"); }
+        aktifDenemeNo = val; e.target.value = val; aktifAramaTerimi = ""; renderPanel(); 
     });
     
-    // YENİ EKLENEN KISIM: Tek ve Gerçek Yeni Deneme Oluşturucu
     document.getElementById('btnYeniDnm').addEventListener('click', () => {
-        let maxNo = getMaxDenemeNo();
-        aktifDenemeNo = maxNo + 1; // En büyük numaradan bir sonrakini aç
-        aktifAramaTerimi = "";
-        
-        // Tarih ve süreyi yeni deneme için otomatik sıfırla/hazırla
+        let maxNo = getMaxDenemeNo(); aktifDenemeNo = maxNo + 1; aktifAramaTerimi = "";
         if(!db.meta) db.meta = {};
         if(!db.meta[aktifDenemeNo]) {
-            // Bugünün tarihini YYYY-MM-DD formatında alıp ekler (Saat farkı hatalarını önleyerek)
             let today = new Date();
             let dateString = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             db.meta[aktifDenemeNo] = { tarih: dateString, sure: 130 };
         }
-        
-        kaydet();
-        renderPanel();
-        showToast(`${aktifDenemeNo}. Deneme oluşturuldu! Başarılar.`, "success");
-    });
-    
-    document.getElementById('denemeNoInput').addEventListener('change', (e) => { 
-        let val = parseInt(e.target.value);
-        if(isNaN(val) || val < 1) val = 1;
-        aktifDenemeNo = val; e.target.value = val; aktifAramaTerimi = ""; renderPanel(); 
+        kaydet(); renderPanel(); showToast(`${aktifDenemeNo}. Deneme oluşturuldu! Başarılar.`, "success");
     });
     
     document.getElementById('btnSilDnm').addEventListener('click', () => { document.getElementById('silModal').style.display = 'flex'; });
@@ -736,35 +761,19 @@ function renderPanel() {
         else { showToast("Kapatılacak boş konu bulunamadı.", "info"); }
     });
 
-    // HATASI DÜZELTİLMİŞ STEPPER OLUŞTURUCU
     const createStepper = (val, disabled, colorClass, tur, kAd, s, tdNet, cb, inpGroupRef) => {
         const div = document.createElement('div'); div.className = 'stepper-group';
         const btnMinus = document.createElement('button'); btnMinus.className = 'stepper-btn'; btnMinus.innerHTML = '−';
         const btnPlus = document.createElement('button'); btnPlus.className = `stepper-btn ${colorClass}`; btnPlus.innerHTML = '+';
-        
         const inp = document.createElement('input');
         inp.type = 'number'; inp.min = 0; inp.value = val; inp.disabled = disabled;
         inp.className = `${colorClass} fw-bold stepper-input`;
         
-        // ÖNEMLİ DÜZELTME: inpGroupRef.inp yerine doğru anahtarı (d, y, b) kullanıyoruz
         inpGroupRef[tur] = inp;
-
         div.append(btnMinus, inp, btnPlus);
 
-        btnMinus.onclick = () => {
-            if(!inp.disabled && parseInt(inp.value) > 0) {
-                inp.value = parseInt(inp.value) - 1; 
-                inp.dispatchEvent(new Event('input'));
-            }
-        };
-
-        btnPlus.onclick = () => {
-            if(!inp.disabled) {
-                inp.value = parseInt(inp.value || 0) + 1; 
-                inp.dispatchEvent(new Event('input'));
-            }
-        };
-
+        btnMinus.onclick = () => { if(!inp.disabled && parseInt(inp.value) > 0) { inp.value = parseInt(inp.value) - 1; inp.dispatchEvent(new Event('input')); } };
+        btnPlus.onclick = () => { if(!inp.disabled) { inp.value = parseInt(inp.value || 0) + 1; inp.dispatchEvent(new Event('input')); } };
         return div;
     };
 
@@ -783,26 +792,19 @@ function renderPanel() {
         tdCb.appendChild(cb);
 
         const tdName = document.createElement('td'); tdName.textContent = kAd;
-
         const tdNet = document.createElement('td'); tdNet.className = 'fw-600';
         tdNet.textContent = s ? net.toFixed(2) : '-';
         if(s && net < 0) tdNet.style.color = 'var(--alert-color)';
 
         let refs = { d: null, y: null, b: null };
 
-        const tdD = document.createElement('td'); 
-        tdD.appendChild(createStepper(data.d || 0, !s, 'text-success', 'd', kAd, s, tdNet, cb, refs));
-        
-        const tdY = document.createElement('td'); 
-        tdY.appendChild(createStepper(data.y || 0, !s, 'text-danger', 'y', kAd, s, tdNet, cb, refs));
-        
-        const tdB = document.createElement('td'); 
-        tdB.appendChild(createStepper(data.b || 0, !s, 'text-info', 'b', kAd, s, tdNet, cb, refs));
+        const tdD = document.createElement('td'); tdD.appendChild(createStepper(data.d || 0, !s, 'text-success', 'd', kAd, s, tdNet, cb, refs));
+        const tdY = document.createElement('td'); tdY.appendChild(createStepper(data.y || 0, !s, 'text-danger', 'y', kAd, s, tdNet, cb, refs));
+        const tdB = document.createElement('td'); tdB.appendChild(createStepper(data.b || 0, !s, 'text-info', 'b', kAd, s, tdNet, cb, refs));
 
         tr.append(tdCb, tdName, tdD, tdY, tdB, tdNet);
         tbody.appendChild(tr);
 
-        // Satır Aç/Kapa
         cb.addEventListener('change', (e) => {
             let isChecked = e.target.checked;
             veriNesnesiOlustur(kAd); db[aktifDers][aktifDenemeNo][kAd].s = isChecked; kaydet();
@@ -812,25 +814,29 @@ function renderPanel() {
             hesaplaAltToplam();
         });
 
-        // Limit Koruyucu ve Hesaplayıcı Dinleyici
         const handleInput = (tur, val, inpRef) => {
             let deger = Math.max(0, parseInt(val) || 0);
             let maxIzinVerilen = getMaksimumGirebilir(kAd, tur);
             
+            let hg = db[aktifDers]?.[aktifDenemeNo]?._hizliGiris;
+            let hgTop = (parseInt(hg?.d)||0) + (parseInt(hg?.y)||0) + (parseInt(hg?.b)||0);
+            
             if(deger > maxIzinVerilen) {
                 deger = maxIzinVerilen;
-                showToast(`Limit aşılamaz! Otomatik ${deger} yapıldı.`, "warning");
-                inpRef.value = deger; // UI'ı hemen düzelt
+                // Eğer Hızlı Giriş varsa ve aşılıyorsa farklı uyarı, normalde aşılıyorsa farklı uyarı ver
+                if (hgTop > 0) {
+                    showToast(`Üst panele girdiğiniz limiti aştınız! (Maksimum ${maxIzinVerilen} eklenebilir)`, "error");
+                } else {
+                    showToast(`Sınav limiti aşılamaz! Otomatik ${deger} yapıldı.`, "warning");
+                }
+                inpRef.value = deger;
             }
             
-            veriNesnesiOlustur(kAd);
-            db[aktifDers][aktifDenemeNo][kAd][tur] = deger;
-            kaydet();
+            veriNesnesiOlustur(kAd); db[aktifDers][aktifDenemeNo][kAd][tur] = deger; kaydet();
             guncelleSatirArayuz(kAd, refs.d.value, refs.y.value, cb.checked, tdNet);
             hesaplaAltToplam();
         };
-
-        // Event Dinleyicilerini Ekliyoruz
+        
         refs.d.addEventListener('input', (e) => handleInput('d', e.target.value, refs.d));
         refs.y.addEventListener('input', (e) => handleInput('y', e.target.value, refs.y));
         refs.b.addEventListener('input', (e) => handleInput('b', e.target.value, refs.b));
@@ -847,22 +853,70 @@ function renderPanel() {
     if(aktifAramaTerimi !== "") { uygulaAramaFiltresi(); aramaInput.focus(); aramaInput.setSelectionRange(aktifAramaTerimi.length, aktifAramaTerimi.length); }
 }
 
+function hesaplaAltToplam() {
+    let topD = 0, topY = 0, topB = 0;
+    müfredat[aktifDers].forEach((kAd) => {
+        let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd];
+        if(data && data.s !== false) { topD += parseInt(data.d)||0; topY += parseInt(data.y)||0; topB += parseInt(data.b)||0; }
+    });
+    let topNet = topD - (topY/4);
+    document.getElementById('tdTopD').textContent = topD;
+    document.getElementById('tdTopY').textContent = topY;
+    document.getElementById('tdTopB').textContent = topB;
+    
+    let kalan = SORU_LIMITLERI[aktifDers] - (topD + topY + topB);
+    
+    // YENİ: Akıllı Sağlama (Hızlı Giriş vs Detaylar)
+    let hg = db[aktifDers]?.[aktifDenemeNo]?._hizliGiris;
+    let hgTop = (parseInt(hg?.d)||0) + (parseInt(hg?.y)||0) + (parseInt(hg?.b)||0);
+    let hgNet = (parseInt(hg?.d)||0) - ((parseInt(hg?.y)||0)/4);
+    
+    let uyariHtml = "";
+    if (hgTop > 0 && (topD + topY + topB) > 0) {
+        if (topD !== parseInt(hg?.d) || topY !== parseInt(hg?.y)) {
+            uyariHtml = `<span class="saglama-uyari" title="Hızlı girdiğiniz net baz alınacaktır."><i class="fas fa-exclamation-triangle"></i> Uyuşmazlık! (Hızlı: ${hgNet.toFixed(2)})</span>`;
+        } else {
+            uyariHtml = `<span class="saglama-basarili"><i class="fas fa-check-circle"></i> Eşleşti</span>`;
+        }
+    }
+
+    document.getElementById('tdTopNet').innerHTML = `Net: ${topNet.toFixed(2)} | Kalan: ${kalan} ${uyariHtml}`;
+}
+
 function getMaksimumGirebilir(aktifKonu, tur) {
-    let digerTop = 0; 
-    müfredat[aktifDers].forEach(k => { 
-        let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s; 
-        if (s !== false) { 
+    let digerTopGnl = 0; // Testin genel limitini (örneğin 30) kontrol eder
+    let digerTopTur = 0; // Hızlı giriş (D, Y, B) spesifik limitini kontrol eder
+
+    müfredat[aktifDers].forEach(k => {
+        let s = db[aktifDers]?.[aktifDenemeNo]?.[k]?.s;
+        if (s !== false) {
             let kData = db[aktifDers]?.[aktifDenemeNo]?.[k] || {};
-            if(k !== aktifKonu) { digerTop += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0)); } 
-            else {
+            if(k !== aktifKonu) {
+                digerTopGnl += (Number(kData.d || 0) + Number(kData.y || 0) + Number(kData.b || 0));
+                digerTopTur += Number(kData[tur] || 0);
+            } else {
                 let dVal = tur === 'd' ? 0 : Number(kData.d || 0);
                 let yVal = tur === 'y' ? 0 : Number(kData.y || 0);
                 let bVal = tur === 'b' ? 0 : Number(kData.b || 0);
-                digerTop += (dVal + yVal + bVal);
+                digerTopGnl += (dVal + yVal + bVal);
             }
-        } 
+        }
     });
-    return Math.max(0, SORU_LIMITLERI[aktifDers] - digerTop);
+
+    let hg = db[aktifDers]?.[aktifDenemeNo]?._hizliGiris;
+    let hgTop = (parseInt(hg?.d)||0) + (parseInt(hg?.y)||0) + (parseInt(hg?.b)||0);
+
+    let maxGenelKalan = Math.max(0, SORU_LIMITLERI[aktifDers] - digerTopGnl);
+    let maxTurKalan = maxGenelKalan;
+
+    // Eğer Hızlı Giriş aktifse, o türün limitini devreye sok (Örn: En fazla 25 doğru girebilirsin)
+    if (hgTop > 0) {
+        let hgTurLimit = parseInt(hg?.[tur]) || 0;
+        maxTurKalan = Math.max(0, hgTurLimit - digerTopTur);
+    }
+
+    // Hangisi daha kısıtlayıcıysa onu döndür
+    return Math.min(maxGenelKalan, maxTurKalan);
 }
 
 function uygulaAramaFiltresi() {
@@ -884,21 +938,6 @@ function guncelleSatirArayuz(kAd, d, y, s, tdNet) {
     let net = dVal - (yVal/4);
     tdNet.textContent = s ? net.toFixed(2) : '-';
     tdNet.style.color = (s && net < 0) ? 'var(--alert-color)' : '';
-}
-
-function hesaplaAltToplam() {
-    let topD = 0, topY = 0, topB = 0;
-    müfredat[aktifDers].forEach((kAd) => {
-        let data = db[aktifDers]?.[aktifDenemeNo]?.[kAd];
-        if(data && data.s !== false) { topD += parseInt(data.d)||0; topY += parseInt(data.y)||0; topB += parseInt(data.b)||0; }
-    });
-    let topNet = topD - (topY/4);
-    document.getElementById('tdTopD').textContent = topD;
-    document.getElementById('tdTopY').textContent = topY;
-    document.getElementById('tdTopB').textContent = topB;
-    
-    let kalan = SORU_LIMITLERI[aktifDers] - (topD + topY + topB);
-    document.getElementById('tdTopNet').textContent = `Net: ${topNet.toFixed(2)} | İşaretlenmeyen: ${kalan}`;
 }
 
 // ============================================================================
@@ -999,11 +1038,7 @@ function runAIPrediction() {
     son5.forEach((dNo, index) => {
         xData.push(index + 1); let gyNet = 0, gkNet = 0;
         Object.keys(müfredat).forEach(ders => {
-            let dersNet = 0;
-            müfredat[ders].forEach(k => {
-                let data = db[ders]?.[dNo]?.[k];
-                if(!data || data.s !== false) { let d = data?.d || 0; let y = data?.y || 0; dersNet += (d - (y / 4)); }
-            });
+            let dersNet = getDersVerisi(ders, dNo).net;
             if(ders === "Türkçe" || ders === "Matematik") gyNet += dersNet; else gkNet += dersNet;
         });
         yDataGY.push(gyNet); yDataGK.push(gkNet);
@@ -1040,9 +1075,7 @@ function listeleGecmis() {
     sirali.forEach(dNo => {
         let net = {}; 
         Object.keys(müfredat).forEach(ders => { 
-            let dN = 0; 
-            müfredat[ders].forEach(k => { let data = db[ders]?.[dNo]?.[k]; if(!data || data.s !== false) { dN += ((data?.d || 0) - ((data?.y || 0) / 4)); } }); 
-            net[ders] = dN; 
+            net[ders] = getDersVerisi(ders, dNo).net; 
         });
         
         let gy = net["Türkçe"] + net["Matematik"]; let gk = net["Tarih"] + net["Coğrafya"] + net["Vatandaşlık"]; let tNet = gy + gk;
@@ -1072,8 +1105,7 @@ function raporIndirCSV() {
     Array.from(dNolar).sort((a,b) => a-b).forEach(dNo => {
         let tarih = db.meta?.[dNo]?.tarih || "-"; let sure = db.meta?.[dNo]?.sure || "-"; let net = {};
         Object.keys(müfredat).forEach(ders => { 
-            let dN = 0; müfredat[ders].forEach(k => { let data = db[ders]?.[dNo]?.[k]; if(!data || data.s !== false) dN += ((data?.d || 0) - ((data?.y || 0) / 4)); }); 
-            net[ders] = dN; 
+            net[ders] = getDersVerisi(ders, dNo).net; 
         });
         let gy = net["Türkçe"] + net["Matematik"], gk = net["Tarih"] + net["Coğrafya"] + net["Vatandaşlık"];
         csv += `${dNo},${tarih},${sure},${net["Türkçe"].toFixed(2)},${net["Matematik"].toFixed(2)},${net["Tarih"].toFixed(2)},${net["Coğrafya"].toFixed(2)},${net["Vatandaşlık"].toFixed(2)},${gy.toFixed(2)},${gk.toFixed(2)},${(gy+gk).toFixed(2)}\n`;
@@ -1095,12 +1127,11 @@ function cizGrafik() {
     
     let data = sirali.map(dNo => {
         let topN = 0, varMi = false;
-        Object.keys(db).forEach(ders => { 
-            if(ders !== 'meta' && ders !== 'lastUpdated' && (aktifGrafikFiltre === "Genel" || ders === aktifGrafikFiltre)) { 
-                müfredat[ders].forEach(k => { 
-                    let data = db[ders]?.[dNo]?.[k]; 
-                    if (!data || data.s !== false) { if((data?.d || 0) > 0 || (data?.y || 0) > 0) varMi = true; topN += ((data?.d || 0) - ((data?.y || 0) / 4)); } 
-                }); 
+        Object.keys(müfredat).forEach(ders => { 
+            if(aktifGrafikFiltre === "Genel" || ders === aktifGrafikFiltre) { 
+                let v = getDersVerisi(ders, dNo);
+                if (v.d > 0 || v.y > 0 || v.b > 0) varMi = true;
+                topN += v.net;
             } 
         });
         return { x: dNo, y: varMi ? topN : null };
