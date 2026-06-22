@@ -874,11 +874,18 @@ function hesaplaAltToplam() {
     let uyariHtml = "";
     if (hgTop > 0 && (topD + topY + topB) > 0) {
         if (topD !== parseInt(hg?.d) || topY !== parseInt(hg?.y)) {
-            uyariHtml = `<span class="saglama-uyari" title="Hızlı girdiğiniz net baz alınacaktır."><i class="fas fa-exclamation-triangle"></i> Uyuşmazlık! (Hızlı: ${hgNet.toFixed(2)})</span>`;
+            uyariHtml = `<div class="saglama-uyari" title="Hızlı girdiğiniz net: ${hgNet.toFixed(2)}"><i class="fas fa-exclamation-triangle"></i> Uyuşmazlık</div>`;
         } else {
-            uyariHtml = `<span class="saglama-basarili"><i class="fas fa-check-circle"></i> Eşleşti</span>`;
+            uyariHtml = `<div class="saglama-basarili"><i class="fas fa-check-circle"></i> Eşleşti</div>`;
         }
     }
+
+    // Yan yana yazmak yerine dikey ve temiz bir hiyerarşi ile alt alta diziyoruz
+    document.getElementById('tdTopNet').innerHTML = `
+        <div style="font-size: 15px; font-weight: bold; color: var(--primary-color);">Net: ${topNet.toFixed(2)}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: normal;">Kalan: ${kalan}</div>
+        ${uyariHtml ? `<div style="margin-top: 4px;">${uyariHtml}</div>` : ''}
+    `;
 
     document.getElementById('tdTopNet').innerHTML = `Net: ${topNet.toFixed(2)} | Kalan: ${kalan} ${uyariHtml}`;
 }
