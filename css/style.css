@@ -1302,3 +1302,24 @@ svg {
     background: var(--purple-color);
     color: white;
 }
+/* 3'lü Sayaç Grid Yapısı */
+.sayac-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+/* Her Sınav İçin Farklı Arka Plan Renkleri (Koyu Tema) */
+.cd-card-lisans { background: linear-gradient(135deg, #1e293b, #0f172a); }
+.cd-card-onlisans { background: linear-gradient(135deg, #0369a1, #075985); }
+.cd-card-orta { background: linear-gradient(135deg, #6d28d9, #4c1d95); }
+
+/* Açık (Gündüz) Tema Renkleri */
+[data-theme="light"] .cd-card-lisans { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+[data-theme="light"] .cd-card-onlisans { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+[data-theme="light"] .cd-card-orta { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+
+/* Mobilde Yan Yana Sığmayacağı İçin Alt Alta Dizer */
+@media (max-width: 960px) {
+    .sayac-grid { grid-template-columns: 1fr; gap: 10px; }
+}
