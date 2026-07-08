@@ -199,6 +199,18 @@ export async function initUserApp(uid) {
         
         temizleHayaletVeriler();
         
+        // YENİ: Sayfa açıldığında en son (en büyük) deneme numarasını bul ve aktif yap
+        let maxDnm = 1;
+        Object.keys(db).forEach(d => {
+            if (d !== 'meta' && d !== 'lastUpdated' && typeof db[d] === 'object') {
+                Object.keys(db[d]).forEach(no => {
+                    let parsed = parseInt(no);
+                    if (!isNaN(parsed) && parsed > maxDnm) maxDnm = parsed;
+                });
+            }
+        });
+        aktifDenemeNo = maxDnm; // Bulunan en son denemeyi ekrana yansıt
+        
         const savedGy = localStorage.getItem(`gy_target_${uid}`); 
         const savedGk = localStorage.getItem(`gk_target_${uid}`);
         if(savedGy) document.getElementById("gy-target").value = savedGy; 
