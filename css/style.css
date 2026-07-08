@@ -612,17 +612,40 @@ thead th {
 }
 
 /* ==========================================================================
-   10. SVG GRAFİK ALANI
+   10. SVG GRAFİK ALANI (Yatay Kaydırılabilir Borsa Modeli)
    ========================================================================== */
 .chart-container { 
     width: 100%; 
     height: 350px; 
     margin-top: 20px; 
+    overflow-x: auto; /* Yatay kaydırmayı açar */
+    overflow-y: hidden; 
+    -webkit-overflow-scrolling: touch; /* Mobilde pürüzsüz (smooth) kaydırma sağlar */
+    scrollbar-width: thin; /* Firefox için ince scrollbar */
+    padding-bottom: 10px; /* Scrollbar'ın grafiği kapatmaması için boşluk */
 }
+
+/* Şık bir Scrollbar (Kaydırma Çubuğu) tasarımı (Chrome/Safari/Edge) */
+.chart-container::-webkit-scrollbar {
+    height: 8px;
+}
+.chart-container::-webkit-scrollbar-track {
+    background: var(--input-bg);
+    border-radius: 4px;
+}
+.chart-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+.chart-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
 svg { 
-    width: 100%; 
+    /* width: 100%; -> Bunu SİLDİK çünkü grafiğin artık ekranı taşıp genişlemesi gerekiyor */
     height: 100%; 
     overflow: visible; 
+    display: block; 
 }
 
 /* ==========================================================================
