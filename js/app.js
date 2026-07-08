@@ -1102,7 +1102,7 @@ function listeleGecmis() {
         let sure = db.meta?.[dNo]?.sure || 130; 
         if(sure !== '-') { tS += parseInt(sure); sSayisi++; }
         
-        html += `<tr><td data-label="No"><strong>${dNo}</strong></td><td data-label="Tarih">${tarih}</td><td data-label="Süre">${sure} dk</td><td data-label="Türkçe">${net["Türkçe"].toFixed(2)}</td><td data-label="Matematik">${net["Matematik"].toFixed(2)}</td><td data-label="Tarih">${net["Tarih"].toFixed(2)}</td><td data-label="Coğrafya">${net["Coğrafya"].toFixed(2)}</td><td data-label="Vatandaşlık">${net["Vatandaşlık"].toFixed(2)}</td><td data-label="GY Net" class="text-primary fw-bold">${gy.toFixed(2)}</td><td data-label="GK Net" class="text-primary fw-bold">${gk.toFixed(2)}</td><td data-label="Toplam" class="fw-bold" style="color:var(--success-color);">${tNet.toFixed(2)}</td></tr>`;
+        html += `<tr><td data-label="No"><strong>${dNo}</strong></td><td data-label="Tarih">${tarih}</td><td data-label="Süre">${sure} dk</td><td data-label="Türkçe">${net["Türkçe"].toFixed(2)}</td><td data-label="Matematik">${net["Matematik"].toFixed(2)}</td><td data-label="Tarih">${net["Tarih"].toFixed(2)}</td><td data-label="Coğrafya">${net["Coğrafya"].toFixed(2)}</td><td data-label="Vatandaşlık">${net["Vatandaşlık"].toFixed(2)}</td><td data-label="GY Net" class="text-primary fw-bold">${gy.toFixed(2)}</td><td data-label="GK Net" class="text-primary fw-bold">${gk.toFixed(2)}</td><td data-label="Toplam" class="fw-bold" style="color:var(--success-color); display:flex; justify-content:flex-end; align-items:center;">${tNet.toFixed(2)} <button class="btn-karne" onclick="acKarneModal(${dNo})" title="Karnesi ve Analizi"><i class="fas fa-eye"></i></button></td></tr>`;
     });
     
     div.innerHTML = html + `</tbody></table>`;
@@ -1211,3 +1211,134 @@ const h = 300, pad = 50, padRight = 85; // YENİ: Sağ boşluğu metinler için 
     // YENİ: Grafik çizildikten sonra scrollbar'ı otomatik olarak en sağa (en güncel denemeye) götürür
     setTimeout(() => { wrap.scrollLeft = wrap.scrollWidth; }, 10);
 }
+
+// ============================================================================
+// 13. GERİ SAYIM SAYACI VE RADAR GRAFİK MOTORU
+// ============================================================================
+
+// A. Geri Sayım Sayacı Algoritması
+let countdownTimerInterval;
+function baslatSayac() {
+    if(countdownTimerInterval) clearInterval(countdownTimerInterval);
+    
+    // Sınav Tarihi: 6 Eylül 2026, Saat 10:15
+    const targetDate = new Date("2026-09-06T10:10:00").getTime(); 
+    const timerEl = document.getElementById("countdownTimer");
+    
+    const guncelle = () => {
+        if(!timerEl) return;
+        const now = new Date().getTime();
+        const diff = targetDate - now;
+
+        if (diff < 0) {
+            timerEl.innerHTML = "<div class='text-success fw-bold fs-18'>Sınav Günü Geldi Çattı! Başarılar!</div>";
+            clearInterval(countdownTimerInterval);
+            return;
+        }
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        timerEl.innerHTML = `
+            <div class="cd-box"><span class="cd-val">${days}</span><span class="cd-lbl">Gün</span></div>
+            <div class="cd-box"><span class="cd-val">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">Saat</span></div>
+            <div class="cd-box"><span class="cd-val">${String(minutes).padStart(2,'0')}</span><span class="cd-lbl">Dk</span></div>
+            <div class="cd-box"><span class="cd-val">${String(seconds).padStart(2,'0')}</span><span class="cd-lbl">Sn</span></div>
+        `;
+    };
+    
+    guncelle(); // Beklemeden hemen 1 kez çalıştır
+    countdownTimerInterval = setInterval(guncelle, 1000);
+}
+
+// Global modal kapatma event listener'ı
+document.addEventListener('DOMContentLoaded', () => {
+    baslatSayac(); // Uygulama açılır açılmaz sayacı başlat
+    
+    document.getElementById('closeKarneBtn')?.addEventListener('click', () => {
+        document.getElementById('karneModal').style.display = 'none';
+    });
+});
+
+// B. Radar (Örümcek) Grafik Çizim Algoritması (Pür SVG)
+window.acKarneModal = function(dNo) {
+    document.getElementById('karneModal').style.display = 'flex';
+    document.getElementById('karneBaslik').innerHTML = `<i class="fas fa-spider"></i> ${dNo}. Deneme Karnesi`;
+    
+    // O denemeye ait derslerin netlerini topla
+    let netler = {}; 
+    Object.keys(müfredat).forEach(ders => { 
+        netler[ders] = getDersVerisi(ders, dNo).net; 
+    });
+    
+    const dersler = ["Türkçe", "Matematik", "Tarih", "Coğrafya", "Vatandaşlık"];
+    const limitler = [30, 30, 27, 18, 15]; // Her dersin çıkabilecek maksimum net (soru) sayısı
+    
+    const container = document.getElementById('radarChartContainer');
+    const w = container.clientWidth || 400;
+    const h = container.clientHeight || 280;
+    const cx = w / 2;
+    const cy = h / 2;
+    const radius = Math.min(cx, cy) - 40; 
+    
+    let svg = `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">`;
+    
+    // 1. Arka plan çokgenlerini çiz (Örümcek ağı seviyeleri)
+    const levels = 4;
+    for(let level = levels; level > 0; level--) {
+        const r = radius * (level / levels);
+        let pts = "";
+        for(let i=0; i<5; i++) {
+            const angle = (Math.PI * 2 * i / 5) - (Math.PI / 2);
+            pts += `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)} `;
+        }
+        svg += `<polygon points="${pts}" fill="var(--card-bg)" stroke="var(--border-color)" stroke-width="1"></polygon>`;
+    }
+    
+    // 2. Eksen çizgilerini ve Ders İsimlerini çiz
+    for(let i=0; i<5; i++) {
+        const angle = (Math.PI * 2 * i / 5) - (Math.PI / 2);
+        const x2 = cx + radius * Math.cos(angle);
+        const y2 = cy + radius * Math.sin(angle);
+        svg += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="var(--border-color)" stroke-width="1"></line>`;
+        
+        const labelX = cx + (radius + 20) * Math.cos(angle);
+        const labelY = cy + (radius + 20) * Math.sin(angle);
+        
+        // Metnin hizalanması için akıllı hesaplama
+        const textAnchor = Math.cos(angle) > 0.1 ? "start" : Math.cos(angle) < -0.1 ? "end" : "middle";
+        svg += `<text x="${labelX}" y="${labelY+5}" fill="var(--text-main)" font-size="12" font-weight="bold" text-anchor="${textAnchor}">${dersler[i]}</text>`;
+    }
+    
+    // 3. Kullanıcının net değerlerini poligon (şekil) olarak çiz
+    let dataPts = "";
+    let dotHTML = "";
+    let netHTML = "";
+    
+    for(let i=0; i<5; i++) {
+        const dAdi = dersler[i];
+        let value = Math.max(0, netler[dAdi]); // Eksi netler grafikte 0 (merkez) kabul edilir
+        const maxVal = limitler[i];
+        const ratio = value / maxVal;
+        const r = radius * ratio;
+        
+        const angle = (Math.PI * 2 * i / 5) - (Math.PI / 2);
+        const ptX = cx + r * Math.cos(angle);
+        const ptY = cy + r * Math.sin(angle);
+        
+        dataPts += `${ptX},${ptY} `;
+        dotHTML += `<circle cx="${ptX}" cy="${ptY}" r="5" fill="var(--purple-color)" stroke="var(--card-bg)" stroke-width="2"></circle>`;
+        
+        netHTML += `<span style="padding:4px 10px; background:var(--input-bg); border:1px solid var(--border-color); border-radius:6px;">${dAdi}: <span class="text-purple">${netler[dAdi].toFixed(2)}</span></span>`;
+    }
+    
+    // Şekli yarı saydam mor renkle doldur
+    svg += `<polygon points="${dataPts}" fill="rgba(139, 92, 246, 0.4)" stroke="var(--purple-color)" stroke-width="2"></polygon>`;
+    svg += dotHTML;
+    svg += `</svg>`;
+    
+    container.innerHTML = svg;
+    document.getElementById('karneNetler').innerHTML = netHTML;
+};
