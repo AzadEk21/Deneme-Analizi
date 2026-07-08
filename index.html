@@ -187,9 +187,19 @@
 
             <h2 class="mt-0"><i class="fas fa-hourglass-half"></i> 2026 KPSS'ye Kalan Zaman</h2>
                 
-                <div id="countdownBox" class="countdown-card mb-20">
-                    <div class="countdown-title"><i class="fas fa-hourglass-half"></i> 2026 KPSS'ye Kalan Zaman (6 Eylül 2026)</div>
-                    <div id="countdownTimer" class="countdown-timer">Hesaplanıyor...</div>
+<div class="sayac-grid mb-25">
+                    <div class="countdown-card cd-card-lisans">
+                        <div class="countdown-title"><i class="fas fa-graduation-cap"></i> KPSS LİSANS (6 Eyl 2026)</div>
+                        <div id="cd-lisans" class="countdown-timer">Hesaplanıyor...</div>
+                    </div>
+                    <div class="countdown-card cd-card-onlisans">
+                        <div class="countdown-title"><i class="fas fa-user-graduate"></i> KPSS ÖN LİSANS (4 Eki 2026)</div>
+                        <div id="cd-onlisans" class="countdown-timer">Hesaplanıyor...</div>
+                    </div>
+                    <div class="countdown-card cd-card-orta">
+                        <div class="countdown-title"><i class="fas fa-school"></i> KPSS ORTAÖĞRETİM (25 Eki 2026)</div>
+                        <div id="cd-ortaogretim" class="countdown-timer">Hesaplanıyor...</div>
+                    </div>
                 </div>
 
             <div class="panel" id="grafikPanel">
@@ -247,7 +257,7 @@
                     <p class="text-muted mb-20 mt-0">Sistemin tüm gücünü kullanabilmek için yeni özelliklerin ve sekmelerin ne işe yaradığını aşağıdan inceleyebilirsiniz:</p>
 
                     <h4 class="text-primary mt-0 mb-5"><i class="fas fa-book"></i> 1. Dersler Sekmesi (Veri Girişi)</h4>
-                    <p class="mt-0 mb-15 text-muted">Deneme sonuçlarınızı sisteme girdiğiniz ana ekrandır. Mobilde rahat giriş için <strong>+ ve - butonlarını</strong> kullanabilirsiniz.<br>
+                    <p class="mt-0 mb-15 text-muted">Deneme sonuçlarınızı sisteme girdiğiniz ana ekrandır. Mobilde rahat giriş için <strong>+ ve - butonlarını</strong> kullanabilirsiniz. Sisteme her girişinizde otomatik olarak <strong>en son kaldığınız denemeden</strong> başlarsınız.<br>
                     ➕ <strong>Yeni Ekle & Gezinme:</strong> Yeni bir deneme girmek için <strong>+ Yeni Ekle</strong> butonuna basın. Ok tuşları sadece kaydettiğiniz denemeler arasında güvenle gezinmenizi sağlar.<br>
                     ⚡ <strong>Hızlı Giriş & Sağlama:</strong> Konu detayı girmek istemediğinizde sadece genel Doğru/Yanlış/Boş sayılarını girerek netinizi kaydedebilir veya detaylı girdiğiniz tablo verileriyle genel toplamın uyuşup uyuşmadığını otomatik kontrol edebilirsiniz.<br>
                     🔍 <strong>Akıllı Arama:</strong> Sağ üstteki arama çubuğunu kullanarak istediğiniz konuyu anında bulabilirsiniz.<br>
@@ -259,13 +269,15 @@
 
                     <h4 class="text-purple mt-0 mb-5"><i class="fas fa-bullseye"></i> 3. Hedef & Geçmiş Sekmesi</h4>
                     <p class="mt-0 mb-15 text-muted">
+                    ⏳ <strong>Geri Sayım Sayaçları:</strong> Lisans, Ön Lisans ve Ortaöğretim sınavlarına kalan süreyi saniye saniye takip edersiniz.<br>
                     🎯 <strong>Hedef ve Mevcut Durum:</strong> GY ve GK hedeflerinize ne kadar yaklaştığınızı yüzdelik ve net bazlı görürsünüz.<br>
+                    👁️ <strong>Deneme Karnesi (Radar Grafik):</strong> Geçmiş tablosundaki göz (Karne) ikonuna tıklayarak o denemenin 5 derslik anatomisini ve dengesini görsel olarak inceleyebilirsiniz.<br>
                     ⏱️ <strong>Zaman Analizi:</strong> Sınavları ortalama kaç dakikada bitirdiğinizi 130 dakikalık KPSS süresiyle kıyaslar.<br>
-                    📈 <strong>Yapay Zeka Tahmini:</strong> En az 5 deneme girdiğinizde sistem son ivmenizi hesaplar ve sınava kadar netlerinizin hangi banda oturacağını tahmin eder.<br>
-                    💾 <strong>Dışa Aktarım:</strong> Tüm denemelerinizi <strong>Excel (CSV)</strong> veya <strong>PDF</strong> olarak cihazınıza indirebilirsiniz.</p>
+                    📈 <strong>Yapay Zeka Tahmini:</strong> En az 5 deneme girdiğinizde sistem son ivmenizi hesaplar ve sınava kadar netlerinizin hangi banda oturacağını tahmin eder.</p>
 
                     <h4 class="text-success mt-0 mb-5"><i class="fas fa-chart-area"></i> 4. Grafik Sekmesi</h4>
-                    <p class="mt-0 mb-15 text-muted">Netlerinizin zaman içindeki gelişimini incelersiniz. Sistem girdiğiniz verilere göre hedef çizginizi ve tam ortalamanızı otomatik olarak grafik üzerinde gösterir.</p>
+                    <p class="mt-0 mb-15 text-muted">Netlerinizin zaman içindeki gelişimini, hedefinizi ve ortalamanızı incelersiniz.<br>
+                    ↔️ <strong>Yatay Kaydırma (Borsa Modeli):</strong> Deneme sayınız arttıkça grafik asla sıkışmaz; parmağınızla veya farenizle grafiği sağa-sola kaydırarak geçmişi ferah bir şekilde inceleyebilirsiniz. Grafik açıldığında otomatik olarak en güncel denemenize odaklanır.</p>
 
                     <div class="p-10 br-6 mt-20" style="background: rgba(14, 165, 233, 0.1); border-left: 4px solid #0ea5e9;">
                         <h4 class="text-info mt-0 mb-5"><i class="fas fa-wifi"></i> Çevrimdışı Çalışma (PWA)</h4>
