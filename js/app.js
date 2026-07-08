@@ -1144,9 +1144,13 @@ function cizGrafik() {
         return { x: dNo, y: varMi ? topN : null };
     }).filter(pt => pt.y !== null);
     
-    if(data.length === 0) return wrap.innerHTML = '<p class="text-center text-muted">Filtreye uygun veri yok.</p>';
+if(data.length === 0) return wrap.innerHTML = '<p class="text-center text-muted">Filtreye uygun veri yok.</p>';
     
-    const w = wrap.clientWidth || 800, h = 300, pad = 50; 
+const h = 300, pad = 50, padRight = 85; // YENİ: Sağ boşluğu metinler için artırdık
+    
+    const minGerekliGenislik = (data.length - 1) * 55 + pad + padRight; 
+    const w = Math.max(wrap.clientWidth || 800, minGerekliGenislik); 
+    
     let toplamNet = data.reduce((sum, pt) => sum + pt.y, 0); let ortalamaNet = data.length > 0 ? (toplamNet / data.length) : 0;
     let maxN = Math.max(...data.map(d => d.y), 10, ortalamaNet), minN = Math.min(...data.map(d => d.y), 0);
     
@@ -1154,27 +1158,31 @@ function cizGrafik() {
     if(aktifGrafikFiltre === "Genel" && currentUid) { targetTotal = (parseFloat(localStorage.getItem(`gy_target_${currentUid}`)) || 0) + (parseFloat(localStorage.getItem(`gk_target_${currentUid}`)) || 0); }
     if(targetTotal > maxN) maxN = targetTotal; 
     
-    let xB = (w - 2 * pad) / Math.max(1, data.length - 1), yB = (h - 2 * pad) / (maxN - minN || 1);
+    // YENİ: xB hesaplamasında artık sağ boşluğu (padRight) kullanıyoruz
+    let xB = (w - pad - padRight) / Math.max(1, data.length - 1), yB = (h - 2 * pad) / (maxN - minN || 1);
     let cRengi = mevcutTema === 'dark' ? "#334155" : "#e2e8f0", mRengi = mevcutTema === 'dark' ? "#94a3b8" : "#64748b";
     
-    let svg = `<svg viewBox="0 0 ${w} ${h}">`; let step = Math.ceil((maxN - minN) / 5) || 1;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}px" height="${h}px">`; let step = Math.ceil((maxN - minN) / 5) || 1;
     
+    // Izgara çizgileri artık w-padRight'a kadar çizilecek
     for(let i = minN; i <= maxN; i += step) { 
         let yP = h - pad - ((i - minN) * yB); 
-        svg += `<line x1="${pad}" y1="${yP}" x2="${w-pad}" y2="${yP}" stroke="${cRengi}"></line>`;
+        svg += `<line x1="${pad}" y1="${yP}" x2="${w-padRight}" y2="${yP}" stroke="${cRengi}"></line>`;
         svg += `<text x="${pad-10}" y="${yP+4}" fill="${mRengi}" font-size="12" text-anchor="end">${i.toFixed(0)}</text>`; 
     }
     
+    // Hedef çizgisi ve metni (Metin için bolca alan bırakıldı)
     if(targetTotal > 0 && aktifGrafikFiltre === "Genel") { 
         let tY = h - pad - ((targetTotal - minN) * yB); 
-        svg += `<line x1="${pad}" y1="${tY}" x2="${w-pad}" y2="${tY}" stroke="var(--success-color)" stroke-width="2" stroke-dasharray="5,5"></line>`;
-        svg += `<text x="${w-pad+5}" y="${tY+4}" fill="var(--success-color)" font-size="12" font-weight="bold">Hedef: ${parseFloat(targetTotal.toFixed(2))}</text>`; 
+        svg += `<line x1="${pad}" y1="${tY}" x2="${w-padRight}" y2="${tY}" stroke="var(--success-color)" stroke-width="2" stroke-dasharray="5,5"></line>`;
+        svg += `<text x="${w-padRight+5}" y="${tY+4}" fill="var(--success-color)" font-size="12" font-weight="bold">Hedef: ${parseFloat(targetTotal.toFixed(2))}</text>`; 
     }
 
+    // Ortalama çizgisi ve metni
     if (data.length > 0) {
         let ortY = h - pad - ((ortalamaNet - minN) * yB);
-        svg += `<line x1="${pad}" y1="${ortY}" x2="${w-pad}" y2="${ortY}" stroke="var(--warning-color)" stroke-width="2" stroke-dasharray="8,6" opacity="0.8"></line>`;
-        svg += `<text x="${w-pad+5}" y="${ortY+4}" fill="var(--warning-color)" font-size="12" font-weight="bold" opacity="0.9">Ort: ${parseFloat(ortalamaNet.toFixed(3))}</text>`;
+        svg += `<line x1="${pad}" y1="${ortY}" x2="${w-padRight}" y2="${ortY}" stroke="var(--warning-color)" stroke-width="2" stroke-dasharray="8,6" opacity="0.8"></line>`;
+        svg += `<text x="${w-padRight+5}" y="${ortY+4}" fill="var(--warning-color)" font-size="12" font-weight="bold" opacity="0.9">Ort: ${parseFloat(ortalamaNet.toFixed(3))}</text>`;
     }
     
     let pD = "", circs = ""; 
@@ -1186,5 +1194,8 @@ function cizGrafik() {
         circs += `<text x="${cx}" y="${cy-12}" fill="var(--primary-color)" font-size="12" font-weight="bold" text-anchor="middle">${pt.y.toFixed(2)}</text>`;
     }); 
     
-    wrap.innerHTML = svg + `<path d="${pD}" fill="none" stroke="var(--primary-color)" stroke-width="3" stroke-linecap="round"></path>${circs}</svg>`;
+   wrap.innerHTML = svg + `<path d="${pD}" fill="none" stroke="var(--primary-color)" stroke-width="3" stroke-linecap="round"></path>${circs}</svg>`;
+    
+    // YENİ: Grafik çizildikten sonra scrollbar'ı otomatik olarak en sağa (en güncel denemeye) götürür
+    setTimeout(() => { wrap.scrollLeft = wrap.scrollWidth; }, 10);
 }
