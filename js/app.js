@@ -1216,37 +1216,45 @@ const h = 300, pad = 50, padRight = 85; // YENİ: Sağ boşluğu metinler için 
 // 13. GERİ SAYIM SAYACI VE RADAR GRAFİK MOTORU
 // ============================================================================
 
-// A. Geri Sayım Sayacı Algoritması
+// A. 3'lü Geri Sayım Sayacı Algoritması
 let countdownTimerInterval;
 function baslatSayac() {
     if(countdownTimerInterval) clearInterval(countdownTimerInterval);
     
-    // Sınav Tarihi: 6 Eylül 2026, Saat 10:15
-    const targetDate = new Date("2026-09-06T10:10:00").getTime(); 
-    const timerEl = document.getElementById("countdownTimer");
+    // Sınav Tarihleri ve Bağlı Oldukları HTML ID'leri
+    const sinavlar = [
+        { id: "cd-lisans", date: new Date("2026-09-06T10:15:00").getTime() },
+        { id: "cd-onlisans", date: new Date("2026-10-04T10:15:00").getTime() },
+        { id: "cd-ortaogretim", date: new Date("2026-10-25T10:15:00").getTime() }
+    ];
     
     const guncelle = () => {
-        if(!timerEl) return;
         const now = new Date().getTime();
-        const diff = targetDate - now;
-
-        if (diff < 0) {
-            timerEl.innerHTML = "<div class='text-success fw-bold fs-18'>Sınav Günü Geldi Çattı! Başarılar!</div>";
-            clearInterval(countdownTimerInterval);
-            return;
-        }
         
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        
-        timerEl.innerHTML = `
-            <div class="cd-box"><span class="cd-val">${days}</span><span class="cd-lbl">Gün</span></div>
-            <div class="cd-box"><span class="cd-val">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">Saat</span></div>
-            <div class="cd-box"><span class="cd-val">${String(minutes).padStart(2,'0')}</span><span class="cd-lbl">Dk</span></div>
-            <div class="cd-box"><span class="cd-val">${String(seconds).padStart(2,'0')}</span><span class="cd-lbl">Sn</span></div>
-        `;
+        sinavlar.forEach(sinav => {
+            const timerEl = document.getElementById(sinav.id);
+            if(!timerEl) return; // İlgili kutu o an ekranda yoksa atla
+            
+            const diff = sinav.date - now;
+            
+            // Zaman dolduysa
+            if (diff < 0) {
+                timerEl.innerHTML = "<div class='text-success fw-bold fs-16' style='padding:10px 0;'>Sınav Vakti! Başarılar!</div>";
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            timerEl.innerHTML = `
+                <div class="cd-box"><span class="cd-val">${days}</span><span class="cd-lbl">Gün</span></div>
+                <div class="cd-box"><span class="cd-val">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">Saat</span></div>
+                <div class="cd-box"><span class="cd-val">${String(minutes).padStart(2,'0')}</span><span class="cd-lbl">Dk</span></div>
+                <div class="cd-box"><span class="cd-val">${String(seconds).padStart(2,'0')}</span><span class="cd-lbl">Sn</span></div>
+            `;
+        });
     };
     
     guncelle(); // Beklemeden hemen 1 kez çalıştır
