@@ -185,6 +185,13 @@
                 <div class="table-responsive" id="gecmisIcerik"></div>
             </div>
 
+            <h2 class="mt-0"><i class="fas fa-hourglass-half"></i> 2026 KPSS'ye Kalan Zaman</h2>
+                
+                <div id="countdownBox" class="countdown-card mb-20">
+                    <div class="countdown-title"><i class="fas fa-hourglass-half"></i> 2026 KPSS'ye Kalan Zaman (6 Eylül 2026)</div>
+                    <div id="countdownTimer" class="countdown-timer">Hesaplanıyor...</div>
+                </div>
+
             <div class="panel" id="grafikPanel">
                 <h2 class="mt-0"><i class="fas fa-chart-area"></i> Net Gelişim Grafiği</h2>
                 <div class="chart-filters" id="grafikFiltreler"></div>
@@ -215,6 +222,17 @@
                     <button id="cancelHesapSilBtn" class="btn-modal-cancel">İptal</button>
                     <button id="confirmHesapSilBtn" class="btn-modal-confirm">Evet, Sil</button>
                 </div>
+            </div>
+        </div>
+<div class="modal-overlay" id="karneModal">
+            <div class="modal-box" style="width: 500px; max-width: 95%;">
+                <div class="flex-between align-center border-bottom pb-10 mb-15">
+                    <h2 class="m-0 text-purple" id="karneBaslik"><i class="fas fa-spider"></i> Deneme Karnesi</h2>
+                    <button id="closeKarneBtn" class="btn-outline-danger" style="padding: 5px 12px; border:none; font-size:20px; background: transparent;"><i class="fas fa-times"></i></button>
+                </div>
+                <p class="fs-13 text-muted mt-0 mb-10">Grafiğin dış çemberine ne kadar yakınsan o derste o kadar başarılısındır (O dersin soru limitine göre hesaplanır).</p>
+                <div id="radarChartContainer" style="width: 100%; height: 280px; position: relative;"></div>
+                <div id="karneNetler" class="mt-15 fs-14 fw-bold flex-row flex-wrap flex-center gap-10"></div>
             </div>
         </div>
 
